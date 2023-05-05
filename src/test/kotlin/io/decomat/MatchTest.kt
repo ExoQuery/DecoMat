@@ -23,44 +23,44 @@ internal class MatchTest {
   inner class `flatMap(?,Map(Map))` {
     @Test
     fun `flatMap(?, ?)`() {
-      assertTrue(FlatMap_M(Is(), Is()).matches(FlatMap(foo, bar)))
-      assertTrue(FlatMap_M(Is(), Is()).matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
+      assertTrue(FlatMap_M(Any(), Any()).matches(FlatMap(foo, bar)))
+      assertTrue(FlatMap_M(Any(), Any()).matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
     }
 
     @Test
     fun `flatMap(?, Map(?))`() =
       assertTrue(
-        FlatMap_M(Is(), Is()).matches(FlatMap(foo, Map(bar, baz)))
+        FlatMap_M(Any(), Any()).matches(FlatMap(foo, Map(bar, baz)))
       )
 
     @Test
     fun `flatMap(?, Map(Map)`() =
       assertTrue(
-        FlatMap_M(Is(), Map_M(Is(), Is<Map>())).matches(FlatMap(foo, Map(foo, Map(waz, kaz))))
+        FlatMap_M(Any(), Map_M(Any(), Any<Map>())).matches(FlatMap(foo, Map(foo, Map(waz, kaz))))
       )
 
     @Test
     fun `flatMap(?, Map(!Entity) - Negative`() =
       assertFalse(
-        FlatMap_M(Is(), Map_M(Is(), Is<Entity>())).matches(FlatMap(foo, Map(foo, Map(waz, kaz))))
+        FlatMap_M(Any(), Map_M(Any(), Any<Entity>())).matches(FlatMap(foo, Map(foo, Map(waz, kaz))))
       )
 
     @Test
     fun `flatMap(?, Map(!Map) - Negative`() =
       assertFalse(
-        FlatMap_M(Is(), Map_M(Is(), Is<Map>())).matches(FlatMap(foo, Map(foo, foo)))
+        FlatMap_M(Any(), Map_M(Any(), Any<Map>())).matches(FlatMap(foo, Map(foo, foo)))
       )
 
     @Test
     fun `flatMap(foo, Map(?))`() =
       assertTrue(
-        FlatMap_M(Is(foo), Map_M(Is(), Is())).matches(FlatMap(foo, Map(foo, foo)))
+        FlatMap_M(Any(foo), Map_M(Any(), Any())).matches(FlatMap(foo, Map(foo, foo)))
       )
 
     @Test
     fun `flatMap(!foo, Map(?)) - Negative`() =
       assertFalse(
-        FlatMap_M(Is(bar), Map_M(Is(), Is())).matches(FlatMap(foo, Map(foo, foo)))
+        FlatMap_M(Any(bar), Map_M(Any(), Any())).matches(FlatMap(foo, Map(foo, foo)))
       )
   }
 
@@ -68,15 +68,15 @@ internal class MatchTest {
   inner class BracketSyntax {
     @Test
     fun `flatMap(?, Map(Map))`() =
-      assertTrue(FlatMap[Is(), Map[Is(), Is<Map>()]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
+      assertTrue(FlatMap[Any(), Map[Any(), Any<Map>()]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
 
     @Test
     fun `flatMap(?, Map(!Map))`() =
-      assertFalse(FlatMap[Is(), Map[Is(), Is<Entity>()]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
+      assertFalse(FlatMap[Any(), Map[Any(), Any<Entity>()]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
 
     @Test
     fun `flatMap(?, Map(Is_Map))`() =
-      assertTrue(FlatMap[Is(), Map[Is(), Is.Map]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
+      assertTrue(FlatMap[Any(), Map[Any(), Any.Map]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
 
   }
 }
@@ -94,19 +94,19 @@ fun main() {
 
   /*
   on(query).match {
-    Map[Is<Query>(), Is(), Is()].when(...).then(...)
+    Map[Any<Query>(), Any(), Any()].when(...).then(...)
   }
 
 
   on(person).match {
-    Person[Name[Is(), Is()], Is()]
+    Person[Name[Any(), Any()], Any()]
       .then { (first, last), age -> ... }
 
    */
 
 
   val case =
-    FlatMap[Distinct[Is()], Map[Is(), Is()]]
+    FlatMap[Distinct[Any()], Map[Any(), Any()]]
       .then { (a), (b1, b2) -> println("Matched: $a, ($b1, $b2)") }
 
   //case.eval(FlatMap(Distinct(foo), Map(bar, baz)))
@@ -118,6 +118,6 @@ fun main() {
 
 
 //
-//  println( FlatMap_M(Is<Entity>(), Map_M(Is(), Is())).matches(FlatMap(foo, Map(foo, foo))) )
-//  println( FlatMap_M(Is<Map>(), Map_M(Is(), Is())).matches(FlatMap(foo, Map(foo, foo))) )
+//  println( FlatMap_M(Any<Entity>(), Map_M(Any(), Any())).matches(FlatMap(foo, Map(foo, foo))) )
+//  println( FlatMap_M(Any<Map>(), Map_M(Any(), Any())).matches(FlatMap(foo, Map(foo, foo))) )
 }

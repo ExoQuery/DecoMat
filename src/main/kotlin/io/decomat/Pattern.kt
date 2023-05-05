@@ -13,7 +13,7 @@ sealed interface Pattern<R> {
 
 // TODO write a custom function with Pattern etc... that is equivalen of `unapply`. They need to be open classes
 abstract class Pattern0<R>(override val typeR: Typed<R>): Pattern<R> {
-  // `matches` function is delegated to implementors e.g. `Is`
+  // `matches` function is delegated to implementors e.g. `Any`
 }
 
 abstract class Pattern1<P1: Pattern<R1>, R1, R>(val pattern1: P1, override val typeR: Typed<R>): Pattern<R> {
