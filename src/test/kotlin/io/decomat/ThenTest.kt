@@ -1,28 +1,26 @@
 package io.decomat
 
-import io.decomat.*
-import io.decomat.Map
 import io.decomat.manual.*
 
 
 object ThenTest {
-  fun test1() = FlatMap_M(Any(), Any()).then { a, b -> "foo" }
-  fun test1B() = FlatMap_M(Any(), Any()).thenBoth {{ a, b -> body }}
-  fun test2() = FlatMap_M(Any(), Any<Map>()).then { a, b -> "foo" }
+  fun test1() = FlatMap_M(Is(), Is()).then { a, b -> "foo" }
+  fun test1B() = FlatMap_M(Is(), Is()).thenBoth {{ a, b -> body }}
+  fun test2() = FlatMap_M(Is(), Is<Map>()).then { a, b -> "foo" }
 
   fun test3() {
-    FlatMap_M(Any(), Map_M(Any(), Any())).thenThis { fm -> "foo" }
+    FlatMap_M(Is(), Map_M(Is(), Is())).thenThis { fm -> "foo" }
 
     // TODO hard type these make it it works right (in the template-tests)
-    FlatMap_M(Any(), Map_M(Any(), Any())).then { a, b -> "foo" }
-    FlatMap_M(Any(), Map_M(Any(), Any<Map>())).then { a, b -> "foo" }
-    FlatMap_M(Any(), Map_M(Any(), Any<Map>())).then { a, (b1, b2) -> "foo" }
-    FlatMap_M(Distinct_M(Any()), Map_M(Any(), Any<Map>())).then { (a), (b1, b2) -> "foo" }
+    FlatMap_M(Is(), Map_M(Is(), Is())).then { a, b -> "foo" }
+    FlatMap_M(Is(), Map_M(Is(), Is<Map>())).then { a, b -> "foo" }
+    FlatMap_M(Is(), Map_M(Is(), Is<Map>())).then { a, (b1, b2) -> "foo" }
+    FlatMap_M(Distinct_M(Is()), Map_M(Is(), Is<Map>())).then { (a), (b1, b2) -> "foo" }
   }
 
   fun myFun() {
     on("foo").match(
-      FlatMap_M(Any(), Map_M(Any(), Any<Map>())).then { a, (b, c) -> "foobar" }
+      FlatMap_M(Is(), Map_M(Is(), Is<Map>())).then { a, (b, c) -> "foobar" }
     )
   }
 
@@ -54,7 +52,7 @@ fun main() {
 
 
   val case =
-    FlatMap[Distinct[Any()], Map[Any(), Any()]]
+    FlatMap[Distinct[Is()], Map[Is(), Is()]]
       .then { (a), (b1, b2) -> println("Matched: $a, ($b1, $b2)") }
 
   case.eval(FlatMap(Distinct(foo), Map(bar, baz)))

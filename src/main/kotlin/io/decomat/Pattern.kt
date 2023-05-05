@@ -28,7 +28,7 @@ abstract class Pattern1<P1: Pattern<R1>, R1, R>(val pattern1: P1, override val t
         else -> false
       }
 
-  fun divideIntoComponentsAny(instance: Any): Components1<R1> =
+  fun divideIntoComponentsAny(instance: kotlin.Any): Components1<R1> =
     when(instance) {
       is HasProductClass<*> ->
         divideIntoComponentsAny(instance.productComponents)
@@ -62,7 +62,7 @@ abstract class Pattern2<P1: Pattern<R1>, P2: Pattern<R2>, R1, R2, R>(val pattern
     }
 
   // assumign the matches function already said 'false' if it doesn't match so at this point just throw an error
-  fun divideIntoComponentsAny(instance: Any): Components2<R1, R2> =
+  fun divideIntoComponentsAny(instance: kotlin.Any): Components2<R1, R2> =
     when(instance) {
       is HasProductClass<*> ->
         divideIntoComponentsAny(instance.productComponents)

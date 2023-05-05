@@ -15,7 +15,7 @@ class Typed<T> private constructor (val type: KType) {
 }
 
 @JvmName("isTypeFun")
-fun isType(value: Any?, type: KType) =
+fun isType(value: kotlin.Any?, type: KType) =
   when (val cls = type.classifier) {
     is KClass<*> -> cls.isInstance(value)
     else -> false

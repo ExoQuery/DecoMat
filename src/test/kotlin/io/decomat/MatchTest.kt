@@ -1,6 +1,5 @@
 package io.decomat
 
-import io.decomat.*
 import io.decomat.Map
 import io.decomat.manual.*
 import org.junit.jupiter.api.Nested
@@ -23,44 +22,44 @@ internal class MatchTest {
   inner class `flatMap(?,Map(Map))` {
     @Test
     fun `flatMap(?, ?)`() {
-      assertTrue(FlatMap_M(Any(), Any()).matches(FlatMap(foo, bar)))
-      assertTrue(FlatMap_M(Any(), Any()).matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
+      assertTrue(FlatMap_M(Is(), Is()).matches(FlatMap(foo, bar)))
+      assertTrue(FlatMap_M(Is(), Is()).matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
     }
 
     @Test
     fun `flatMap(?, Map(?))`() =
       assertTrue(
-        FlatMap_M(Any(), Any()).matches(FlatMap(foo, Map(bar, baz)))
+        FlatMap_M(Is(), Is()).matches(FlatMap(foo, Map(bar, baz)))
       )
 
     @Test
     fun `flatMap(?, Map(Map)`() =
       assertTrue(
-        FlatMap_M(Any(), Map_M(Any(), Any<Map>())).matches(FlatMap(foo, Map(foo, Map(waz, kaz))))
+        FlatMap_M(Is(), Map_M(Is(), Is<Map>())).matches(FlatMap(foo, Map(foo, Map(waz, kaz))))
       )
 
     @Test
     fun `flatMap(?, Map(!Entity) - Negative`() =
       assertFalse(
-        FlatMap_M(Any(), Map_M(Any(), Any<Entity>())).matches(FlatMap(foo, Map(foo, Map(waz, kaz))))
+        FlatMap_M(Is(), Map_M(Is(), Is<Entity>())).matches(FlatMap(foo, Map(foo, Map(waz, kaz))))
       )
 
     @Test
     fun `flatMap(?, Map(!Map) - Negative`() =
       assertFalse(
-        FlatMap_M(Any(), Map_M(Any(), Any<Map>())).matches(FlatMap(foo, Map(foo, foo)))
+        FlatMap_M(Is(), Map_M(Is(), Is<Map>())).matches(FlatMap(foo, Map(foo, foo)))
       )
 
     @Test
     fun `flatMap(foo, Map(?))`() =
       assertTrue(
-        FlatMap_M(Any(foo), Map_M(Any(), Any())).matches(FlatMap(foo, Map(foo, foo)))
+        FlatMap_M(Is(foo), Map_M(Is(), Is())).matches(FlatMap(foo, Map(foo, foo)))
       )
 
     @Test
     fun `flatMap(!foo, Map(?)) - Negative`() =
       assertFalse(
-        FlatMap_M(Any(bar), Map_M(Any(), Any())).matches(FlatMap(foo, Map(foo, foo)))
+        FlatMap_M(Is(bar), Map_M(Is(), Is())).matches(FlatMap(foo, Map(foo, foo)))
       )
   }
 
@@ -68,18 +67,20 @@ internal class MatchTest {
   inner class BracketSyntax {
     @Test
     fun `flatMap(?, Map(Map))`() =
-      assertTrue(FlatMap[Any(), Map[Any(), Any<Map>()]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
+      assertTrue(FlatMap[Is(), Map[Is(), Is<Map>()]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
 
     @Test
     fun `flatMap(?, Map(!Map))`() =
-      assertFalse(FlatMap[Any(), Map[Any(), Any<Entity>()]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
+      assertFalse(FlatMap[Is(), Map[Is(), Is<Entity>()]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
 
     @Test
     fun `flatMap(?, Map(Is_Map))`() =
-      assertTrue(FlatMap[Any(), Map[Any(), Any.Map]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
+      assertTrue(FlatMap[Is(), Map[Is(), Is.Map]].matches(FlatMap(foo, Map(foo, Map(waz, kaz)))))
 
   }
 }
+
+
 
 
 
@@ -106,7 +107,7 @@ fun main() {
 
 
   val case =
-    FlatMap[Distinct[Any()], Map[Any(), Any()]]
+    FlatMap[Distinct[Is()], Map[Is(), Is()]]
       .then { (a), (b1, b2) -> println("Matched: $a, ($b1, $b2)") }
 
   //case.eval(FlatMap(Distinct(foo), Map(bar, baz)))
