@@ -19,12 +19,12 @@ import io.decomat.*
 
 @JvmName("then00")
 fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R, O>
-  Stage<Pattern2<P1, P2, R1, R2, R>>.then(f: (R1, R2) -> O): Case<O> =
+  Stage<Pattern2<P1, P2, R1, R2, R>, R>.then(f: (R1, R2) -> O): Case<O> =
     object: Case<O> {
       private val self = this@then
 
       override fun matches(value: Any): Boolean =
-        (value as? ProductClass<*>)?.let { self.pat.matchesAny(it) && self.check() } ?: false
+        (value as? ProductClass<*>)?.let { self.pat.matchesAny(it) && self.check(value as R) } ?: false
 
       override fun eval(value: Any): O =
         (value as? ProductClass<*>)?.let {
@@ -32,6 +32,10 @@ fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R, O>
           f(r1, r2)
         } ?: throw IllegalArgumentException("foo")
     }
+
+fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) =
+  Stage<Pattern2<P1, P2, R1, R2, R>, R>(pat, {true})
+
 
 fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R>
   Stage<Pattern2<P1, P2, R1, R2, R>, R>.thenIf(f: (R1, R2) -> Boolean): Stage<Pattern2<P1, P2, R1, R2, R>, R> =

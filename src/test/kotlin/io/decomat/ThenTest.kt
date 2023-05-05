@@ -1,35 +1,41 @@
-//package io.decomat
-//
-//import io.decomat.manual.*
-//import kotlin.test.Test
-//import kotlin.test.assertEquals
-//
-//class ThenTest {
-//  val foo = Entity("foo")
-//  val bar = Entity("bar")
-//  val baz = Entity("baz")
-//  val waz = Entity("waz")
-//  val kaz = Entity("kaz")
-//
-//  data class Res1<A>(val a: A)
-//  data class Res2<A, B>(val a: A, val b: B)
-//  data class Res3<A, B, C>(val a: A, val b: B, val c: C)
-//  data class Res4<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
-//
-//  @Test
-//  fun `Then00 - flatMap(Is(), Is())`() {
-//    FlatMap_M(Is(), Is()).then { a: Query, b: Query -> Res2(a, b) } // Just check that the types don't fail
-//    assert(FlatMap_M(Is(), Is())        .then { a, b -> Res2(a, b) }.eval(FlatMap(foo, bar)) == Res2(foo, bar))
-//    assert(FlatMap_M(Is(), Is<Entity>()).then { a, b -> Res2(a, b) }.eval(FlatMap(foo, bar)) == Res2(foo, bar))
-//    assert(FlatMap_M(Is(), Is()).thenBoth {{ a, b -> Res3(a, b, body) }}.eval(FlatMap(foo, bar)) == Res3(foo, bar, bar))
-//  }
-//
-//
-//
-//}
-//
-//
-//
+package io.decomat
+
+import io.decomat.manual.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class ThenTest {
+  val foo = Entity("foo")
+  val bar = Entity("bar")
+  val baz = Entity("baz")
+  val waz = Entity("waz")
+  val kaz = Entity("kaz")
+
+  data class Res1<A>(val a: A)
+  data class Res2<A, B>(val a: A, val b: B)
+  data class Res3<A, B, C>(val a: A, val b: B, val c: C)
+  data class Res4<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
+
+  @Test
+  fun `Then00 - flatMap(Is(), Is())`() {
+    case(FlatMap_M(Is(), Is())).then { a: Query, b: Query -> Res2(a, b) } // Just check that the types don't fail
+    assert(
+      case(FlatMap_M(Is(), Is())).then { a, b -> Res2(a, b) }.eval(FlatMap(foo, bar)) == Res2(foo, bar)
+    )
+    assert(
+      case(FlatMap_M(Is(), Is<Entity>())).then { a, b -> Res2(a, b) }.eval(FlatMap(foo, bar)) == Res2(foo, bar)
+    )
+//    assert(
+//      case(FlatMap_M(Is(), Is())).thenBoth {{ a, b -> Res3(a, b, body) }}.eval(FlatMap(foo, bar)) == Res3(foo, bar, bar)
+//    )
+  }
+
+
+
+}
+
+
+
 //object ThenTest2 {
 //
 //  fun test3() {
@@ -49,7 +55,7 @@
 //  }
 //
 //}
-//
+
 //fun main() {
 //  val foo = Entity("foo")
 //  val bar = Entity("bar")
