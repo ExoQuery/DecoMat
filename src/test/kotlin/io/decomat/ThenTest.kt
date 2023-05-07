@@ -59,15 +59,21 @@ class ThenTest {
     )
 
   @Test
-  fun `Then20 - flatMap(Map, Is)`() =
-    assert(
-      case(FlatMap_M(Map_M(Is(), Is()), Is())).then { (a1, a2), b -> Res3(a1, a2, b) }.eval(FlatMap(Map(foo, bar), baz)) == Res3(foo, bar, baz)
-    )
-
-  @Test
   fun `Then11 - flatMap(Distinct, Distinct)`() =
     assert(
       case(FlatMap_M(Distinct_M(Is()), Distinct_M(Is()))).then { (a), (b) -> Res2(a, b) }.eval(FlatMap(Distinct(foo), Distinct(bar))) == Res2(foo, bar)
+    )
+
+  @Test
+  fun `Then12 - flatMap(Distinct, Map)`() =
+    assert(
+      case(FlatMap_M(Distinct_M(Is()), Map_M(Is(), Is()))).then { (a), (b1, b2) -> Res3(a, b1, b2) }.eval(FlatMap(Distinct(foo), Map(bar, baz))) == Res3(foo, bar, baz)
+    )
+
+  @Test
+  fun `Then20 - flatMap(Map, Is)`() =
+    assert(
+      case(FlatMap_M(Map_M(Is(), Is()), Is())).then { (a1, a2), b -> Res3(a1, a2, b) }.eval(FlatMap(Map(foo, bar), baz)) == Res3(foo, bar, baz)
     )
 
   @Test
