@@ -25,9 +25,9 @@ class ThenTest {
     assert(
       case(FlatMap_M(Is(), Is<Entity>())).then { a, b -> Res2(a, b) }.eval(FlatMap(foo, bar)) == Res2(foo, bar)
     )
-//    assert(
-//      case(FlatMap_M(Is(), Is())).thenBoth {{ a, b -> Res3(a, b, body) }}.eval(FlatMap(foo, bar)) == Res3(foo, bar, bar)
-//    )
+    assert(
+      case(FlatMap_M(Is(), Is())).thenThis {{ a, b -> Res3(a, b, body) }}.eval(FlatMap(foo, bar)) == Res3(foo, bar, bar)
+    )
   }
 
 

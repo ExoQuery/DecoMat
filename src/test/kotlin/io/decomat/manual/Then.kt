@@ -17,37 +17,53 @@ import io.decomat.*
 // no divideIntoComponents on Pattern0 since it doesn't make sense sin it's only the base-object, nothing is inside
 // todo renmae a, b into p1/p2 or even longer pattern1, pattern2
 
-@JvmName("then00")
-fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R, O>
-  Stage<Pattern2<P1, P2, R1, R2, R>, R>.then(f: (R1, R2) -> O): Case<O> =
-    object: Case<O> {
-      private val self = this@then
+//@JvmName("then00")
+//fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R, O>
+//  Stage<Pattern2<P1, P2, R1, R2, R>, R>.then(f: (R1, R2) -> O): Case<O> =
+//    object: Case<O> {
+//      private val self = this@then
+//
+//      override fun matches(value: Any): Boolean =
+//        (value as? ProductClass<*>)?.let { self.pat.matchesAny(it) && self.check(value as R) } ?: false
+//
+//      override fun eval(value: Any): O =
+//        (value as? ProductClass<*>)?.let {
+//          val (r1, r2) = self.pat.divideIntoComponentsAny(it)
+//          f(r1, r2)
+//        } ?: throw IllegalArgumentException("foo")
+//    }
 
-      override fun matches(value: Any): Boolean =
-        (value as? ProductClass<*>)?.let { self.pat.matchesAny(it) && self.check(value as R) } ?: false
 
-      override fun eval(value: Any): O =
-        (value as? ProductClass<*>)?.let {
-          val (r1, r2) = self.pat.divideIntoComponentsAny(it)
-          f(r1, r2)
-        } ?: throw IllegalArgumentException("foo")
-    }
+
 
 fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) =
-  Stage<Pattern2<P1, P2, R1, R2, R>, R>(pat, {true})
+  Then00<P1, P2, R1, R2, R>(pat, {true})
+
+class Then00<P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R>(
+  override val pat: Pattern2<P1, P2, R1, R2, R>,
+  override val check: (R) -> Boolean
+): Stage<Pattern2<P1, P2, R1, R2, R>, R> {
+  private fun <O> useComponents(r: R, f: (R1, R2) -> O): O =
+    (r as? ProductClass<*>)?.let {
+      val (r1, r2) = pat.divideIntoComponentsAny(it)
+      f(r1, r2)
+    } ?: throw IllegalArgumentException("foo")
+
+  fun thenIf(f: (R1, R2) -> Boolean): Then00<P1, P2, R1, R2, R> =
+    Then00<P1, P2, R1, R2, R>(pat) { r: R -> useComponents(r, f) }
+
+  fun thenIfThis(f: R.() -> (R1, R2) -> Boolean): Then00<P1, P2, R1, R2, R> =
+    Then00<P1, P2, R1, R2, R>(pat) { r: R -> useComponents(r, f(r)) }
+
+  fun <O> then(f: (R1, R2) -> O): Case<O, R> =
+    StageCase(pat, check) { value -> useComponents(value, f) }
+
+  fun <O> thenThis(f: R.() -> (R1, R2) -> O): Case<O, R> =
+    StageCase(pat, check) { v -> useComponents(v, f(v)) }
+}
 
 
-fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R>
-  Stage<Pattern2<P1, P2, R1, R2, R>, R>.thenIf(f: (R1, R2) -> Boolean): Stage<Pattern2<P1, P2, R1, R2, R>, R> =
-    Stage<Pattern2<P1, P2, R1, R2, R>, R>(
-      this.pat,
-      { r: R ->
-        (r as? ProductClass<*>)?.let {
-          val (r1, r2) = this.pat.divideIntoComponentsAny(it)
-          f(r1, r2)
-        } ?: throw IllegalArgumentException("foo")
-      }
-    )
+
 
 // TODO thenIfBoth
 //fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R, O>

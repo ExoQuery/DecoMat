@@ -25,13 +25,34 @@ internal fun <C> wrapNonComps(a: kotlin.Any?) =
 //}
 
 
-data class Stage<P, R>(val pat: P, val check: (R) -> Boolean)
+interface Stage<P, R> {
+  val pat: P
+  val check: (R) -> Boolean
+
+}
 
 
-interface Case<O> {
-  fun matches(value: kotlin.Any): Boolean
-  fun eval(value: kotlin.Any): O
-  fun evalSafe(value: kotlin.Any): O? =
+interface Case<O, R> {
+  fun matches(value: R): Boolean
+  fun eval(value: R): O
+  fun evalSafe(value: R): O? =
     if (!matches(value)) null
     else eval(value)
+}
+
+inline fun <O, reified R> Case<O, R>.matches(value: Any) =
+  this.matches(value as? R ?: throw IllegalArgumentException("The value $value is not of type ${R::class.qualifiedName}"))
+
+inline fun <O, reified R> Case<O, R>.eval(value: Any) =
+  this.eval(value as? R ?: throw IllegalArgumentException("The value $value is not of type ${R::class.qualifiedName}"))
+
+
+class StageCase<O, R>(
+  val pat: Pattern<R>,
+  val check: (R) -> Boolean,
+  val evalCase: (R) -> O
+): Case<O, R> {
+  override fun matches(value: R): Boolean =
+    (value as? ProductClass<*>)?.let { pat.matchesAny(it) && check(value) } ?: false
+  override fun eval(value: R): O = evalCase(value)
 }
