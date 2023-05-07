@@ -28,7 +28,7 @@ internal fun <C> wrapNonComps(a: kotlin.Any?) =
 interface Stage<P, R> {
   val pat: P
   val check: (R) -> Boolean
-
+  fun notRightCls(value: R): Nothing = throw IllegalArgumentException("The value $value was not a ProductClass")
 }
 
 
