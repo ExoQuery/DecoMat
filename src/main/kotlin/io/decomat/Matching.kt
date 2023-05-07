@@ -16,13 +16,13 @@ internal fun <C> wrapNonComps(a: kotlin.Any?) =
 
 
 
-//fun on(value: kotlin.Any): DoMatch = DoMatch(value)
+fun <M> on(value: M): DoMatch<M> = DoMatch(value)
 
 // TODO Have an else-clause
-//class DoMatch(val value: kotlin.Any) {
-//  fun <O> match(vararg cases: Case<O>): O? =
-//    cases.find { theCase -> theCase.matches(value) }?.eval(value)
-//}
+class DoMatch<R>(val value: R) {
+  fun <O> match(vararg cases: Case<O, R>): O? =
+    cases.find { theCase -> theCase.matches(value) }?.eval(value)
+}
 
 
 interface Stage<P, R> {

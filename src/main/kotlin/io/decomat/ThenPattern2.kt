@@ -1,6 +1,4 @@
-package io.decomat.manual
-
-import io.decomat.*
+package io.decomat
 
 fun <P1: Pattern0<R1>, P2: Pattern0<R2>, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = Then00(pat, {true})
 

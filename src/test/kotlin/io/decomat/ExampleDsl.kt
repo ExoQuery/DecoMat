@@ -28,6 +28,7 @@ data class Map(val head: Query, val body: Query): Query, HasProductClass<Map> {
   }
 }
 
+
 operator fun <A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query> Map.Companion.get(a: A, b: B) = Map_M(a, b)
 val Is.Companion.Map get() = Is<Map>()
 

@@ -1,8 +1,6 @@
 package io.decomat
 
-import io.decomat.manual.*
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class ThenTest {
   val foo = Entity("foo")
