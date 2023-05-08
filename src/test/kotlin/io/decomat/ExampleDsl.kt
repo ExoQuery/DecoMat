@@ -17,7 +17,6 @@ data class FlatMap(val head: Query, val body: Query): Query, HasProductClass<Fla
 }
 
 operator fun <A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query> FlatMap.Companion.get(a: A, b: B) = FlatMap_M(a, b)
-
 class FlatMap_M<A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query>(a: A, b: B): Pattern2<A, B, AP, BP, FlatMap>(a, b, Typed<FlatMap>())
 //class FlatMap_Is: Any<FlatMap>(Typed<FlatMap>())
 
