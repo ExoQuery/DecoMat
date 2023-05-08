@@ -1,4 +1,5 @@
 package io.decomat
 
-class TypesTest {
+interface TypesTest {
+
 }

@@ -174,3 +174,54 @@ class Then22<P1: Pattern2<P11, P12, R11, R12, R1>, P2: Pattern2<P21, P22, R21, R
   fun <O> then(f: (Components2<R11, R12>, Components2<R21, R22>) -> O): Case<O, R> = StageCase(pat, check) { value -> useComponents(value, f) }
   fun <O> thenThis(f: R.() -> (Components2<R11, R12>, Components2<R21, R22>) -> O): Case<O, R> = StageCase(pat, check) { v -> useComponents(v, f(v)) }
 }
+
+
+
+//
+//class Then111<P1: Pattern1<P11, R11, R1>, P2: Pattern1<P21, R21, R2>, P3: Pattern1<P31, R31, R3>,
+//  P11: Pattern<R11>, P21: Pattern<R21>, P31: Pattern<R31>,
+//  R11, R21, R31, R1, R2, R3, R>(
+//  override val pat: Pattern3<P1, P2, P3, R1, R2, R3, R>,
+//  override val check: (R) -> Boolean
+//): Stage<Pattern3<P1, P2, P3, R1, R2, R3, R>, R> {
+//  private fun <O> useComponents(r: R, f: (Components1<R11>, Components1<R21>, Components1<R31>) -> O): O =
+//    (r as? ProductClass<*>)?.let {
+//      val (r1, r2, r3) = pat.divideIntoComponentsAny(it)
+//      val (r11) = pat.pattern1.divideIntoComponentsAny(r1 as Any)
+//      val (r21) = pat.pattern2.divideIntoComponentsAny(r2 as Any)
+//      val (r31) = pat.pattern3.divideIntoComponentsAny(r3 as Any)
+//      f(Components1(r11), Components1(r21), Components1(r31))
+//    } ?: notRightCls(r)
+//
+//  fun thenIf(f: (Components1<R11>, Components1<R21>, Components1<R31>) -> Boolean) =
+//    Then111(pat) { r: R -> useComponents(r, f) }
+//
+//  fun thenIfThis(f: R.() -> (Components1<R11>, Components1<R21>, Components1<R31>) -> Boolean) =
+//    Then111(pat) { r: R -> useComponents(r, f(r)) }
+//
+//  fun <O> then(f: (Components1<R11>, Components1<R21>, Components1<R31>) -> O): Case<O, R> =
+//    StageCase(pat, check) { value -> useComponents(value, f) }
+//
+//  fun <O> thenThis(f: R.() -> (Components1<R11>, Components1<R21>, Components1<R31>) -> O): Case<O, R> =
+//    StageCase(pat, check) { v -> useComponents(v, f(v)) }
+//}
+//
+//class Then112<P1: Pattern1<P11, R11, R1>, P2: Pattern1<P21, R21, R2>, P3: Pattern3<P31, P32, P33, R31, R32, R33, R3>, P11: Pattern<R11>, P21: Pattern<R21>, P31: Pattern<R31>, P32: Pattern<R32>, P33: Pattern<R33>, R11, R21, R31, R32, R33, R1, R2, R3, R>(
+//  override val pat: Pattern3<P1, P2, P3, R1, R2, R3, R>,
+//  override val check: (R) -> Boolean
+//): Stage<Pattern3<P1, P2, P3, R1, R2, R3, R>, R> {
+//
+//  private fun <O> useComponents(r: R, f: (R11, R21, R31, R32, R33) -> O): O =
+//    (r as? ProductClass<*>)?.let {
+//      val (r1, r2, r3) = pat.divideIntoComponentsAny(it)
+//      val (r11) = pat.pattern1.divideIntoComponentsAny(r1 as Any)
+//      val (r21) = pat.pattern2.divideIntoComponentsAny(r2 as Any)
+//      val (r31, r32, r33) = pat.pattern3.divideIntoComponentsAny(r3 as Any)
+//      f(r11, r21, r31, r32, r33)
+//    } ?: notRightCls(r)
+//
+//  fun thenIf(f: (R11, R21, R31, R32, R33) -> Boolean) = Then112(pat) { r: R -> useComponents(r, f) }
+//  fun thenIfThis(f: R.() -> (R11, R21, R31, R32, R33) -> Boolean) = Then112(pat) { r: R -> useComponents(r, f(r)) }
+//  fun <O> then(f: (R11, R21, R31, R32, R33) -> O): Case<O, R> = StageCase(pat, check) { value -> useComponents(value, f) }
+//  fun <O> thenThis(f: R.() -> (R11, R21, R31, R32, R33) -> O): Case<O, R> = StageCase(pat, check) { v -> useComponents(v, f(v)) }
+//}

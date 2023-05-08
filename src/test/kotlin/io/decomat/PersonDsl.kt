@@ -11,7 +11,7 @@ class Name_M<P1: Pattern<A1>, P2: Pattern<A2>, A1: String, A2: String>(a: P1, b:
 operator fun <P1: Pattern<A1>, P2: Pattern<A2>, A1: String, A2: String> Name.Companion.get(a: P1, b: P2) = Name_M(a, b)
 
 data class Person(val name: Name, val age: Int): HasProductClass<Person> {
-  override val productComponents = ProductClass2(this, name, age)
+  override val productComponents = ProductClass1(this, name)
 
   companion object {
   }

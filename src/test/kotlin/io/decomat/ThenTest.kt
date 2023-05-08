@@ -2,18 +2,7 @@ package io.decomat
 
 import kotlin.test.Test
 
-class ThenTest {
-  val foo = Entity("foo")
-  val bar = Entity("bar")
-  val baz = Entity("baz")
-  val waz = Entity("waz")
-  val kaz = Entity("kaz")
-
-  data class Res1<A>(val a: A)
-  data class Res2<A, B>(val a: A, val b: B)
-  data class Res3<A, B, C>(val a: A, val b: B, val c: C)
-  data class Res4<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
-
+class ThenTest: DecomatTest {
   // Just check that the types don't fail
   @Test
   fun typesTest() {
