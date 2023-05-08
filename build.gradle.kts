@@ -2,11 +2,24 @@ plugins {
     kotlin("jvm") version "1.8.20"
     application
     //id("com.google.devtools.ksp") version "1.8.0-1.0.8"
+    id("maven-publish")
     idea
 }
 
-group = "org.choppythelumberjack"
-version = "1.0-SNAPSHOT"
+publishing {
+    publications {
+        create<MavenPublication>("mavenKotlin") {
+            from(components["kotlin"])
+
+            groupId = "io.exoquery"
+            artifactId = "decomat"
+            version = "0.0.1"
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions{
