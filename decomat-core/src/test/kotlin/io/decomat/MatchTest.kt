@@ -1,7 +1,5 @@
 package io.decomat
 
-import io.decomat.Map
-import io.decomat.manual.*
 import org.junit.jupiter.api.Nested
 
 

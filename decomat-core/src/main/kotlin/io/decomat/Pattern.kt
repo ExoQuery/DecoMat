@@ -1,8 +1,5 @@
 package io.decomat
 
-import io.decomat.Typed
-import io.decomat.isType
-
 sealed interface Pattern<R> {
   val typeR: Typed<R>
   fun matches(comps: ProductClass<R>): Boolean

@@ -1,7 +1,5 @@
 package io.decomat
 
-import io.decomat.Typed
-
 private fun fail(msg: String): Nothing = throw IllegalArgumentException(msg)
 
 // TODO need to test this with null

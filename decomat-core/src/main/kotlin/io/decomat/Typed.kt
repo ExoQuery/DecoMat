@@ -1,7 +1,5 @@
 package io.decomat
 
-import io.decomat.Pattern0
-import io.decomat.ProductClass
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
