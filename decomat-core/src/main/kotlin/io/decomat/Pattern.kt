@@ -93,6 +93,23 @@ abstract class Pattern3<P1: Pattern<R1>, P2: Pattern<R2>, P3: Pattern<R3>, R1, R
             wrapNonComps<R3>(compsDef.c).let { pattern3.matches(it) }
         else -> false
       }
+
+  fun divideIntoComponentsAny(instance: kotlin.Any): Components3<R1, R2, R3> =
+    when(instance) {
+      is HasProductClass<*> ->
+        divideIntoComponentsAny(instance.productComponents)
+      is ProductClass3<*, *, *, *> ->
+        if (!isType(instance.value, typeR.type)) fail("Invalid type of data")  // todo refine message
+        else divideIntoComponents(instance as ProductClass<R>)
+      else -> fail("Cannot divide $instance into components. It is not a Product2 class.")
+    }
+
+  fun divideIntoComponents(instance: ProductClass<R>): Components3<R1, R2, R3> =
+    when(val inst = instance.isIfHas()) {
+      is ProductClass3<*, *, *, *> ->
+        Components3(inst.a as R1, inst.b as R2, inst.c as R3)
+      else -> fail("must match properly") // todo refine message
+    }
 }
 
 private fun fail(msg: String): Nothing = throw IllegalArgumentException(msg)
