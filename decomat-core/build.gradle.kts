@@ -7,25 +7,10 @@ plugins {
     id("maven-publish")
     idea
     id("dev.anies.gradle.template")
+    signing
 }
 
 sourceSets["main"].kotlin.srcDir(file("build/templates"))
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenKotlin") {
-            from(components["kotlin"])
-
-            groupId = "io.exoquery"
-            artifactId = "decomat-core"
-            version = "0.0.3"
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
-
 
 tasks.register<TemplateTask>("template_base", TemplateTask::class) {
     data = mutableMapOf("key" to "value")

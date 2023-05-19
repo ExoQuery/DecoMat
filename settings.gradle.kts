@@ -10,19 +10,6 @@ pluginManagement {
   }
 }
 
-
-
-dependencyResolutionManagement {
-  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-  repositories {
-    google()
-    mavenCentral()
-    maven(url = "https://plugins.gradle.org/m2/")
-    maven(url = "https://jitpack.io")
-    maven(url = "https://dl.bintray.com/arrow-kt/arrow-kt/")
-  }
-}
-
 rootProject.name = "decomat"
 
 include(":decomat-core")
