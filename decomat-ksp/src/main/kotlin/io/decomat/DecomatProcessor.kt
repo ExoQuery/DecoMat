@@ -6,7 +6,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 
-class MyProcessor(
+class DecomatProcessor(
   private val logger: KSPLogger,
   val codeGenerator: CodeGenerator
 ) : SymbolProcessor {
