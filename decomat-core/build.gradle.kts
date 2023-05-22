@@ -21,6 +21,8 @@ plugins {
     //id("com.google.devtools.ksp") version "1.8.20"
     id("maven-publish")
     idea
+    // TODO Needed for the freemarker dependencies despite the fact that freemarker is imported
+    //      need to look into why freemarker can't be found if this plugin is removed.
     id("dev.anies.gradle.template")
     signing
 }
