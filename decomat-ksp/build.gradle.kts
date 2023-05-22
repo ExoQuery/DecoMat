@@ -14,4 +14,5 @@ dependencies {
   testImplementation(kotlin("test"))
   //implementation("com.facebook:ktfmt:0.43")
   implementation(kotlin("reflect"))
+  implementation("org.freemarker:freemarker:2.3.31")
 }
