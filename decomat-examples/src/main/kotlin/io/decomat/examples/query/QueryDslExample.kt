@@ -14,6 +14,9 @@ object QueryDslExample {
     @Component val body: Query
   ): Query, HasProductClass<FlatMap> {
     override val productComponents = productComponentsOf(this, head, body)
+
+    companion object {
+    }
   }
   data class Entity(val name: String): Query
 

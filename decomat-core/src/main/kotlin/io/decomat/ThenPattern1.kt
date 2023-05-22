@@ -12,16 +12,6 @@ class Then0<P: Pattern0<R>, R>(
   inline fun <O> thenThis(crossinline f: R.() -> O): Case<O, R> = StageCase(pat, check) { r: R -> r.f() }
 }
 
-fun foo() {
-  //"blah".all {  }
-  val list = mutableListOf<String>()
-  list.add("blah")
-
-  val s: LinkedHashSet<String> = LinkedHashSet()
-  val x: IntArray = TODO()
-  x.size
-}
-
 fun <P: Pattern1<P1, R1, R>, P1: Pattern<R1>, R1, R> case(pat: Pattern1<P1, R1, R>) = Then1(pat, {true})
 
 class Then1<P: Pattern1<P1, R1, R>, P1: Pattern<R1>, R1, R>(

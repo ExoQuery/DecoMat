@@ -41,24 +41,65 @@ class DecomatProcessor(
     }
 
     componentsToGen.forEach { (cls, members) ->
-      generateExtensionFunction(cls, members)
+      generateExtensionFunction(GenModel.fromClassAndMembers(cls, members))
     }
 
     return listOf()
   }
 
-  private fun generateExtensionFunction(ksClass: KSClassDeclaration, members: List<KSValueParameter>) {
+  data class GenModel private constructor(val imports: List<String>, val members: List<Member>, val ksClass: KSClassDeclaration) {
     val packageName = ksClass.packageName.asString()
     val className = ksClass.simpleName.asString()
     val fullClassName = ksClass.qualifiedName?.asString()
+    // since we are going to add components to the imports, use regular name for the use-site
+    val useSiteName = className
+
+    companion object {
+      fun fromClassAndMembers(ksClass: KSClassDeclaration, ksParams: List<KSValueParameter>): GenModel {
+        val members = ksParams.map { param ->
+          val tpe = param.type.resolve().declaration
+          val fullName = tpe.qualifiedName?.asString()
+          val name = tpe.simpleName.asString()
+          Member(name, fullName, param)
+        }
+
+        val classFullNameListElem =
+          ksClass.qualifiedName?.asString()?.let { listOf(it) } ?: listOf()
+
+        val additionalImports =
+          classFullNameListElem + members.mapNotNull { it.fullName }
+
+        return GenModel(defaultImports + additionalImports.distinct(), members, ksClass)
+      }
+
+      val defaultImports = listOf(
+        "io.decomat.Pattern",
+        "io.decomat.Pattern1",
+        "io.decomat.Pattern2",
+        "io.decomat.Pattern3",
+        "io.decomat.Typed",
+        "io.decomat.Is"
+      )
+
+    }
+  }
+  data class Member(val name: String, val fullName: String?, val ksParam: KSValueParameter) {
+    // since we are going to add components to the imports, use regular name for the use-site
+    val useSiteName = name
+  }
+
+  private fun generateExtensionFunction(model: GenModel) {
+    val packageName = model.packageName
+    val className = model.className
+    val classUseSiteName = model.useSiteName
 
     val file = codeGenerator.createNewFile(
       Dependencies.ALL_FILES, packageName, "${className}DecomatExtensions"
     )
 
     file.bufferedWriter().use { writer ->
-      fun eachLetter(f: KSValueParameter.(String) -> String) =
-        members.withIndex().map { (num, member) ->
+      fun eachLetter(f: Member.(String) -> String) =
+        model.members.withIndex().map { (num, member) ->
           val letter = ('a' + num).uppercase()
           f(member, letter)
         }.joinToString(", ")
@@ -66,9 +107,9 @@ class DecomatProcessor(
       // Generate: A: Pattern<AP>, B: Pattern<BP>
       val pats = eachLetter { "$it: Pattern<${it}P>" }
       // Generate: AP: Query, BP: Query
-      val patTypes = eachLetter { "${it}P: ${this.type.resolve().declaration.qualifiedName?.asString() ?: "<Unknown-Name-Type: ${this.type.element}>"}" }
+      val patTypes = eachLetter { "${it}P: ${this.useSiteName}" }
       // Generate: Pattern2<A, B, AP, BP, FlatMap>
-      val subClass = "Pattern${members.size}<${eachLetter { it.uppercase() }}, ${eachLetter { "${it}P" }}, $fullClassName>"
+      val subClass = "Pattern${model.members.size}<${eachLetter { it.uppercase() }}, ${eachLetter { "${it}P" }}, $classUseSiteName>"
       // Generate: a: A, b: B
       val classValsTypes = eachLetter { "${it.lowercase()}: $it" }
       // Generate: a, b
@@ -76,17 +117,21 @@ class DecomatProcessor(
 
       writer.apply {
         // class FlatMap_M<A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query>(a: A, b: B): Pattern2<A, B, AP, BP, FlatMap>(a, b, Typed<FlatMap>())
+
+        //operator fun <A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query> FlatMap.Companion.get(a: A, b: B) = FlatMap_M(a, b)
+
+
         val fileContent =
           """
             package $packageName
             
-            import io.decomat.Pattern
-            import io.decomat.Pattern1
-            import io.decomat.Pattern2
-            import io.decomat.Pattern3
-            import io.decomat.Typed
+            // include the '            ' since that is the margin of the fileContent variable that needs to be in front of everything, otherwise it won't be stripped properly
+            ${model.imports.map { "import $it" }.joinToString("\n            ")}
             
-            class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$fullClassName>())
+            class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
+            operator fun <$pats, $patTypes> $classUseSiteName.Companion.get($classValsTypes) = ${className}_M($classVals)
+            val $classUseSiteName.Companion.Is get() = Is<$classUseSiteName>()
+             
           """.trimIndent()
 
         write(fileContent)
