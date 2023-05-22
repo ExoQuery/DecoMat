@@ -74,4 +74,6 @@ class ThenTest: DecomatTest {
     assert(
       case(FlatMap_M(Map_M(Is(), Is()), Map_M(Is(), Is()))).then { (a1, a2), (b1, b2) -> Res4(a1, a2, b1, b2) }.eval(FlatMap(Map(foo, bar), Map(baz, waz))) == Res4(foo, bar, baz, waz)
     )
+
+  // TODO Need test for Then31-33 and Then000-Then333
 }

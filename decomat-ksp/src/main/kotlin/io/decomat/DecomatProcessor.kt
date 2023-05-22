@@ -34,13 +34,19 @@ class DecomatProcessor(
           }
         }.toList()
 
-    if (componentsToGen.isEmpty()) logger.warn("No classes found with the @Matchable interface.")
+    if (componentsToGen.isEmpty())
+      logger.warn("No classes found with the @Matchable interface.")
     else {
       val description = componentsToGen.map { (cls, comps) -> "${cls.simpleName.getShortName()}(${comps.map { it.name?.getShortName() ?: "<Unknown-Name>" }.joinToString(", ")})" }.joinToString(", ")
       logger.warn("Found the following classes/components with the @Matchable/@Component annotations: ${description}")
     }
 
     componentsToGen.forEach { (cls, members) ->
+      // TODO Need to test
+      if (members.size > 3) {
+        logger.error("The Matchable class ${cls.simpleName.asString()} has more than 3 components (i.e. ${members.size}). No more than 3 are supported so far.")
+      }
+
       generateExtensionFunction(GenModel.fromClassAndMembers(cls, members))
     }
 
