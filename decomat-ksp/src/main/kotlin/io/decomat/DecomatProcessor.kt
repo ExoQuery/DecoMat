@@ -12,9 +12,7 @@ class DecomatProcessor(
 ) : SymbolProcessor {
 
   override fun process(resolver: Resolver): List<KSAnnotated> {
-    val symbols = resolver.getSymbolsWithAnnotation("Extended")
-    val generatedSymbols = mutableListOf<KSAnnotated>()
-
+    val symbols = resolver.getSymbolsWithAnnotation("io.decomat.Matchable")
     val componentsToGen =
       symbols
         .mapNotNull { sym ->
@@ -34,27 +32,29 @@ class DecomatProcessor(
             else ->
               null
           }
-        }
+        }.toList()
 
-//      .filter { it is KSClassDeclaration && it.classKind == ClassKind.CLASS }
-//      .forEach { ksClass ->
-//        val hasExtendedMethod = ksClass.declarations.any {
-//          it.hasAnnotation("ExtendedMethod") && it is KSFunctionDeclaration
-//        }
-//        if (hasExtendedMethod) {
-//          generateExtensionFunction(ksClass as KSClassDeclaration)
-//          generatedSymbols.add(ksClass)
-//        }
-//      }
+    if (componentsToGen.isEmpty()) logger.warn("No classes found with the @Matchable interface.")
+    else {
+      val description = componentsToGen.map { (cls, comps) -> "${cls.simpleName.getShortName()}(${comps.map { it.name?.getShortName() ?: "<Unknown-Name>" }.joinToString(", ")})" }.joinToString(", ")
+      logger.warn("Found the following classes/components with the @Matchable/@Component annotations: ${description}")
+    }
 
-    return generatedSymbols
+    componentsToGen.forEach { (cls, members) ->
+      generateExtensionFunction(cls, members)
+    }
+
+    return listOf()
   }
 
   private fun generateExtensionFunction(ksClass: KSClassDeclaration, members: List<KSValueParameter>) {
     val packageName = ksClass.packageName.asString()
     val className = ksClass.simpleName.asString()
+    val fullClassName = ksClass.qualifiedName?.asString()
 
-    val file = codeGenerator.createNewFile(Dependencies.ALL_FILES, packageName, "$className.kt")
+    val file = codeGenerator.createNewFile(
+      Dependencies.ALL_FILES, packageName, "${className}DecomatExtensions"
+    )
 
     file.bufferedWriter().use { writer ->
       fun eachLetter(f: KSValueParameter.(String) -> String) =
@@ -64,11 +64,11 @@ class DecomatProcessor(
         }.joinToString(", ")
 
       // Generate: A: Pattern<AP>, B: Pattern<BP>
-      val pats = eachLetter { "$it, Pattern<${it}P>" }
+      val pats = eachLetter { "$it: Pattern<${it}P>" }
       // Generate: AP: Query, BP: Query
-      val patTypes = eachLetter { "${it}P: ${className}" }
+      val patTypes = eachLetter { "${it}P: ${this.type.resolve().declaration.qualifiedName?.asString() ?: "<Unknown-Name-Type: ${this.type.element}>"}" }
       // Generate: Pattern2<A, B, AP, BP, FlatMap>
-      val subClass = "Pattern${members.size}<${eachLetter { it.lowercase() }}, ${eachLetter { "${it}P" }}, $className>"
+      val subClass = "Pattern${members.size}<${eachLetter { it.uppercase() }}, ${eachLetter { "${it}P" }}, $fullClassName>"
       // Generate: a: A, b: B
       val classValsTypes = eachLetter { "${it.lowercase()}: $it" }
       // Generate: a, b
@@ -80,7 +80,13 @@ class DecomatProcessor(
           """
             package $packageName
             
-            class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$className>())
+            import io.decomat.Pattern
+            import io.decomat.Pattern1
+            import io.decomat.Pattern2
+            import io.decomat.Pattern3
+            import io.decomat.Typed
+            
+            class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$fullClassName>())
           """.trimIndent()
 
         write(fileContent)

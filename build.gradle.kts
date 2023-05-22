@@ -37,6 +37,11 @@ allprojects {
       kotlinOptions.jvmTarget = "1.8"
     }
 
+    compileJava {
+      sourceCompatibility = "1.8"
+      targetCompatibility = "1.8"
+    }
+
     compileTestKotlin {
       kotlinOptions.jvmTarget = "1.8"
     }

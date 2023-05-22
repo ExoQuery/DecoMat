@@ -14,3 +14,4 @@ rootProject.name = "decomat"
 
 include(":decomat-core")
 include(":decomat-ksp")
+include(":decomat-examples")
