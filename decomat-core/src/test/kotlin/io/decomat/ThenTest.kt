@@ -2,7 +2,7 @@ package io.decomat
 
 import kotlin.test.Test
 
-class ThenTest: DecomatTest {
+public class ThenTest: DecomatTest {
   // Just check that the types don't fail
   @Test
   fun typesTest() {

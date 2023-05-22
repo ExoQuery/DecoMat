@@ -1,8 +1,23 @@
 import dev.anies.gradle.template.TemplateTask
+import java.io.OutputStreamWriter
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
+import freemarker.template.TemplateDirectiveModel
+import freemarker.template.TemplateException
+import freemarker.core.Environment
+import freemarker.template.Configuration
+import freemarker.template.TemplateDirectiveBody
+import freemarker.template.TemplateModel
+import freemarker.template.SimpleScalar
+import freemarker.template.Template
+import org.gradle.internal.impldep.org.apache.commons.io.output.ByteArrayOutputStream
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.io.Writer
+import java.nio.charset.Charset
 
 plugins {
     kotlin("jvm")
-    application
     //id("com.google.devtools.ksp") version "1.8.20"
     id("maven-publish")
     idea
@@ -18,33 +33,85 @@ tasks.register<TemplateTask>("template_base", TemplateTask::class) {
     into("build/templates/io/decomat")
 }
 
-tasks.register("template", Sync::class) {
-    dependsOn("template_base")
-    from("build/templates/io/decomat")
-    into("build/templates/io/decomat")
-    include("*.ftl")
-    rename { filename: String ->
-        filename.replace(".ftl", ".kt")
-    }
-}
+//tasks.register("template", Sync::class) {
+//    dependsOn("template_base")
+//    from("build/templates/io/decomat")
+//    into("build/templates/io/decomat")
+//    include("*.ftl")
+//    rename { filename: String ->
+//        filename.replace(".ftl", ".kt")
+//    }
+//}
 
-tasks.test {
+//tasks.test {
+//    useJUnitPlatform()
+//}
+
+tasks.named<Test>("test") {
     useJUnitPlatform()
 }
-
 
 kotlin {
     jvmToolchain(8)
 }
-
-application {
-    mainClass.set("MainKt")
-}
-
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     testImplementation(kotlin("test"))
     //implementation("com.facebook:ktfmt:0.43")
     implementation(kotlin("reflect"))
+    implementation("org.freemarker:freemarker:2.3.31")
+}
+
+
+val runFreemarkerTemplate by tasks.registering {
+    doLast {
+        val cfg = Configuration(Configuration.VERSION_2_3_0)
+        cfg.setDefaultEncoding("UTF-8")
+
+        // if 'decomat-core/src/templates/' output doesn't exist, create it
+        val created = File(projectDir, "build/templates/io/decomat").mkdirs()
+        //println("----- Creating dirs: build/templates/io/decomat: ${created} ------")
+
+        //println("----- Creating Template -----")
+        val template = Template("", File(projectDir, "src/templates/Pattern3.ftl").readText(), cfg)
+        val root =
+            HashMap<String, Any>()
+                .apply {
+                    put("output", OutputDirective())
+                    //put("model", model.encode())
+                }
+
+        //println("----- Creating Sink: build/templates/Pattern3.ftl.gen -----")
+        val file = File(projectDir, "build/templates/Pattern3.ftl.gen")
+        file.createNewFile()
+        val os = file.outputStream()
+
+        val out: Writer = OutputStreamWriter(os)
+
+        //println("----- Executing Template -----")
+        template.process(root, out)
+        out.flush()
+        os.close()
+    }
+}
+
+
+tasks.withType<KotlinCompile> {
+    dependsOn(runFreemarkerTemplate)
+}
+
+class OutputDirective : TemplateDirectiveModel {
+    @Throws(TemplateException::class, IOException::class)
+    override fun execute(
+        env: Environment,
+        params: Map<*, *>,
+        loopVars: Array<freemarker.template.TemplateModel>,
+        body: TemplateDirectiveBody
+    ) {
+        val file: SimpleScalar? = params["file"] as SimpleScalar?
+        val fw = FileWriter(File(file.toString()))
+        body.render(fw)
+        fw.flush()
+    }
 }
