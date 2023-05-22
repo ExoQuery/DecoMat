@@ -5,20 +5,20 @@ import io.decomat.*
 object QueryDslExample {
 
 
-  sealed interface Query
+  sealed interface Query<T>
 
   @Matchable
-  data class FlatMap(
-    @Component val head: Query,
+  data class FlatMap<T, R>(
+    @Component val head: Query<T>,
     val id: String,
-    @Component val body: Query
-  ): Query, HasProductClass<FlatMap> {
+    @Component val body: Query<R>
+  ): Query<R>, HasProductClass<FlatMap<T, R>> {
     override val productComponents = productComponentsOf(this, head, body)
 
     companion object {
     }
   }
-  data class Entity(val name: String): Query
+  data class Entity<T>(val name: String): Query<T>
 
 
 }

@@ -52,14 +52,16 @@ class DecomatProcessor(
     val className = ksClass.simpleName.asString()
     val fullClassName = ksClass.qualifiedName?.asString()
     // since we are going to add components to the imports, use regular name for the use-site
-    val useSiteName = className
+    // also, we want star projections e.g. for FlatMap<T, R> use FlatMap<*, *>
+    val useSiteName = ksClass.asStarProjectedType().toString()
 
     companion object {
       fun fromClassAndMembers(ksClass: KSClassDeclaration, ksParams: List<KSValueParameter>): GenModel {
         val members = ksParams.map { param ->
           val tpe = param.type.resolve().declaration
           val fullName = tpe.qualifiedName?.asString()
-          val name = tpe.simpleName.asString()
+          // for the parameters, if they have generic types you we want those to have starts e.g. Query<*> if it's Query<T>
+          val name = param.type.resolve().starProjection().toString()
           Member(name, fullName, param)
         }
 
@@ -92,6 +94,7 @@ class DecomatProcessor(
     val packageName = model.packageName
     val className = model.className
     val classUseSiteName = model.useSiteName
+    val companionName = model.className
 
     val file = codeGenerator.createNewFile(
       Dependencies.ALL_FILES, packageName, "${className}DecomatExtensions"
@@ -121,16 +124,18 @@ class DecomatProcessor(
         //operator fun <A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query> FlatMap.Companion.get(a: A, b: B) = FlatMap_M(a, b)
 
 
+        // include the '            ' in joinToString below since that is the margin of the fileContent variable that needs to be in
+        // front of everything, otherwise it won't be stripped properly
         val fileContent =
           """
             package $packageName
             
-            // include the '            ' since that is the margin of the fileContent variable that needs to be in front of everything, otherwise it won't be stripped properly
+            
             ${model.imports.map { "import $it" }.joinToString("\n            ")}
             
             class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
-            operator fun <$pats, $patTypes> $classUseSiteName.Companion.get($classValsTypes) = ${className}_M($classVals)
-            val $classUseSiteName.Companion.Is get() = Is<$classUseSiteName>()
+            operator fun <$pats, $patTypes> ${companionName}.Companion.get($classValsTypes) = ${className}_M($classVals)
+            val ${companionName}.Companion.Is get() = Is<$classUseSiteName>()
              
           """.trimIndent()
 
