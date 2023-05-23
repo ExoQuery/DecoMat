@@ -75,6 +75,11 @@ allprojects {
 subprojects {
   val varintName = project.name
 
+  apply {
+    plugin("org.jetbrains.kotlin.jvm")
+    plugin("org.jetbrains.dokka")
+  }
+
   val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
 
   tasks {
