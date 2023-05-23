@@ -3,6 +3,7 @@ plugins {
   `java-library`
   `maven-publish`
   id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+  id("org.jetbrains.dokka") version "1.8.20"
   id("signing")
 }
 
@@ -74,11 +75,14 @@ allprojects {
 subprojects {
   val varintName = project.name
 
+  val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
+
   tasks {
-//  val javadocJar by creating(Jar::class) {
-//    archiveClassifier.set("javadoc")
-//    from(tasks["javadoc"])
-//  }
+    val javadocJar by creating(Jar::class) {
+      dependsOn(dokkaHtml)
+      archiveClassifier.set("javadoc")
+      from(dokkaHtml.outputDirectory)
+    }
     val sourcesJar by creating(Jar::class) {
       archiveClassifier.set("sources")
       from(sourceSets["main"].allSource)
@@ -91,7 +95,7 @@ subprojects {
         from(components["kotlin"])
         artifactId = varintName
 
-        //artifact(tasks["javadocJar"])
+        artifact(tasks["javadocJar"])
         artifact(tasks["sourcesJar"])
 
         pom {
