@@ -29,9 +29,9 @@ someCustomer match {
 Similarly, in Kotlin with Decomat you can do this:
 ```kotlin
 on(someCustomer).match(
-  case(Customer[Name[Is(), Is()], Partner(Is())])
+  case( Customer[Name[Is(), Is()], Partner(Is())] )
     .then { first, last, id -> func(first, last, id) },
-  case(Customer[Name[Is(), Is()], Organization[Is("BigOrg")]])
+  case( Customer[Name[Is(), Is()], Organization[Is("BigOrg")]] )
     .then { first, last -> func(first, last) }
 )
 ```
