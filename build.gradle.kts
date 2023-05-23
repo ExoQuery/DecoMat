@@ -55,17 +55,6 @@ allprojects {
   }
 }
 
-tasks {
-//  val javadocJar by creating(Jar::class) {
-//    archiveClassifier.set("javadoc")
-//    from(tasks["javadoc"])
-//  }
-  val sourcesJar by creating(Jar::class) {
-    archiveClassifier.set("sources")
-    from(sourceSets["main"].allSource)
-  }
-}
-
 //publishing {
 //  publications {
 //    create<MavenPublication>("mavenJava") {
@@ -84,6 +73,17 @@ tasks {
 
 subprojects {
   val varintName = project.name
+
+  tasks {
+//  val javadocJar by creating(Jar::class) {
+//    archiveClassifier.set("javadoc")
+//    from(tasks["javadoc"])
+//  }
+    val sourcesJar by creating(Jar::class) {
+      archiveClassifier.set("sources")
+      from(sourceSets["main"].allSource)
+    }
+  }
 
   publishing {
     publications {
