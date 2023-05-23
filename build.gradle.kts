@@ -55,9 +55,15 @@ allprojects {
   }
 }
 
-java {
-  withJavadocJar()
-  withSourcesJar()
+tasks {
+//  val javadocJar by creating(Jar::class) {
+//    archiveClassifier.set("javadoc")
+//    from(tasks["javadoc"])
+//  }
+  val sourcesJar by creating(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets["main"].allSource)
+  }
 }
 
 //publishing {
@@ -84,6 +90,9 @@ subprojects {
       create<MavenPublication>("mavenJava") {
         from(components["kotlin"])
         artifactId = varintName
+
+        //artifact(tasks["javadocJar"])
+        artifact(tasks["sourcesJar"])
 
         pom {
           name.set("decomat")
