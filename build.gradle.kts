@@ -47,21 +47,10 @@ allprojects {
     }
   }
 
-  // Needed for maven publishing
-  val sourcesJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("sources")
-    from(kotlin.sourceSets.main.get().kotlin)
-  }
-  val javadocJar by tasks.creating(Jar::class) {
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
-    description = "Assembles Javadoc JAR"
-    archiveClassifier.set("javadoc")
-  }
-
   // Disable publishing for decomat examples
   tasks.withType<PublishToMavenRepository>().configureEach {
     onlyIf {
-      publication.artifactId == "decomat-examples"
+      publication.artifactId != "decomat-examples"
     }
   }
 }
@@ -84,6 +73,11 @@ allprojects {
 
 subprojects {
   val varintName = project.name
+
+  java {
+    withJavadocJar()
+    withSourcesJar()
+  }
 
   publishing {
     publications {
