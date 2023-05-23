@@ -1,5 +1,12 @@
 package io.decomat
 
+import java.util.WeakHashMap
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
+
 sealed interface ProductClass<T> {
   val value: T
   fun isIfHas() =
@@ -8,6 +15,45 @@ sealed interface ProductClass<T> {
       else -> this
     }
 }
+
+private fun fail(msg: String): Nothing = throw IllegalArgumentException(msg)
+
+// Does not seem to work, no annotations are found
+//@Suppress("UNCHECKED_CAST")
+//interface HasProductClassAuto<T>: HasProductClass<T> {
+//  override val productComponents: ProductClass<T> get() =
+//    cache.computeIfAbsent(this) { _doInit() } as ProductClass<T>
+//
+//  fun _doInit(): ProductClass<T> {
+//    val cls = this::class
+//    val ctor = cls.primaryConstructor ?: fail("No primary constructor found in the class ${this}")
+//    println(cls.memberProperties.map { "${it.name} (${it.annotations})" })
+//    val componentNames = ctor.parameters.filter { it.annotations.any { anno -> anno.annotationClass.qualifiedName == "io.decomat.Component" } }.map { it.name }
+//    if (componentNames.isEmpty()) fail("No components annotated with @Component found in the class ${this}. Found components: ${ctor.parameters.map { it.name }}.")
+//    val components: List<KProperty1<out HasProductClassAuto<T>, *>> =
+//      cls.memberProperties.filter { componentNames.contains(it.name) }
+//    if (components.size != componentNames.size)
+//      fail("Not all the parameters with @Component annoations (${componentNames.joinToString(", ")}) were found to be components (${components.joinToString { "," }})")
+//
+//    fun comp(i: Int) = components[i].getter.call(this)
+//
+//    val productClass =
+//      when(components.size) {
+//        1 -> ProductClass1(this as T, comp(0))
+//        2 -> ProductClass2(this as T, comp(0), comp(1))
+//        3 -> ProductClass3(this as T, comp(0), comp(1), comp(2))
+//        else -> fail("Num components needs to be 1, 2, or 3 but was: ${components.size}")
+//      }
+//
+//    return productClass
+//  }
+//
+//  // Sigh, need to use a global cache to compute product-classes we've since since you can't assign
+//  // values directly to varaibles inside of kotlin interfaces
+//  companion object {
+//    val cache = WeakHashMap<HasProductClass<*>, ProductClass<*>>()
+//  }
+//}
 
 interface HasProductClass<T>: ProductClass<T> {
   val productComponents: ProductClass<T>

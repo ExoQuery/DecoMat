@@ -1,5 +1,7 @@
 package io.decomat
 
+import com.google.devtools.ksp.innerArguments
+import com.google.devtools.ksp.isLocal
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
@@ -59,15 +61,29 @@ class DecomatProcessor(
     val fullClassName = ksClass.qualifiedName?.asString()
     // since we are going to add components to the imports, use regular name for the use-site
     // also, we want star projections e.g. for FlatMap<T, R> use FlatMap<*, *>
+
+    //val useSiteName = "${ksClass.simpleName.getShortName()}<${ksClass.typeParameters.map { it.name.getShortName() }.joinToString(", ")}>" //.asStarProjectedType().toString()
+    // using the logic above removes star projections but seems to be too strict logically
     val useSiteName = ksClass.asStarProjectedType().toString()
 
-    companion object {
+      companion object {
       fun fromClassAndMembers(ksClass: KSClassDeclaration, ksParams: List<KSValueParameter>): GenModel {
         val members = ksParams.map { param ->
-          val tpe = param.type.resolve().declaration
-          val fullName = tpe.qualifiedName?.asString()
+          val tpe = param.type.resolve()
+          val decl = tpe.declaration
+          val typeParamNames = ksClass.typeParameters.map { it.qualifiedName }
+
+          // if it is used as a type-parameter for the class, don't use it
+          val fullName =
+            if (typeParamNames.contains(decl.qualifiedName))
+              null
+            else
+              decl.qualifiedName?.asString()
+
           // for the parameters, if they have generic types you we want those to have starts e.g. Query<*> if it's Query<T>
+          // NOTE: Removing `.starProjection()` makes type work (mostly) but seems to make matching too strict
           val name = param.type.resolve().starProjection().toString()
+
           Member(name, fullName, param)
         }
 
@@ -113,10 +129,24 @@ class DecomatProcessor(
           f(member, letter)
         }.joinToString(", ")
 
+      val memberParams = model.members.map { it.name }
+
+      val typeParams =
+        model.ksClass.typeParameters
+          // only use top-level parameters defined in our classes since we are star-projecting everything inside
+          // e.g. if our class is FlatMap<Query<T>, Query<R>> we don't want to include the T and R, in the parameters
+          // list because the match will actually be done on FlatMap<Query<*>, Query<*>> and the `operator function get`
+          // that returns FlatMap_M won't know what these parameters are requiring them to be specified explicitly.
+          // On the other hand, if it's a top-level like Entity<T> then we should include it.
+          .filter { memberParams.contains(it.name.getShortName()) }
+          .mapNotNull { it.name.asString() }
+
+      //logger.warn("---------- Type Params: ${typeParams}")
+
       // Generate: A: Pattern<AP>, B: Pattern<BP>
       val pats = eachLetter { "$it: Pattern<${it}P>" }
       // Generate: AP: Query, BP: Query
-      val patTypes = eachLetter { "${it}P: ${this.useSiteName}" }
+      val patTypes = eachLetter { "${it}P: ${this.useSiteName}" } + if (typeParams.isNotEmpty()) ", " + typeParams.joinToString(", ") else ""
       // Generate: Pattern2<A, B, AP, BP, FlatMap>
       val subClass = "Pattern${model.members.size}<${eachLetter { it.uppercase() }}, ${eachLetter { "${it}P" }}, $classUseSiteName>"
       // Generate: a: A, b: B
@@ -124,18 +154,16 @@ class DecomatProcessor(
       // Generate: a, b
       val classVals = eachLetter { it.lowercase() }
 
+
       writer.apply {
         // class FlatMap_M<A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query>(a: A, b: B): Pattern2<A, B, AP, BP, FlatMap>(a, b, Typed<FlatMap>())
-
         //operator fun <A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query> FlatMap.Companion.get(a: A, b: B) = FlatMap_M(a, b)
-
 
         // include the '            ' in joinToString below since that is the margin of the fileContent variable that needs to be in
         // front of everything, otherwise it won't be stripped properly
         val fileContent =
           """
             package $packageName
-            
             
             ${model.imports.map { "import $it" }.joinToString("\n            ")}
             

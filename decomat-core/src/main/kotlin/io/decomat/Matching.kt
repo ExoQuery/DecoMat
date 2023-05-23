@@ -20,6 +20,9 @@ fun <M> on(value: M): DoMatch<M> = DoMatch(value)
 class DoMatch<R>(val value: R) {
   fun <O> match(vararg cases: Case<O, R>): O? =
     cases.find { theCase -> theCase.matches(value) }?.eval(value)
+
+//  fun <O> matchAny(vararg cases: Case<O, R>): O? =
+//    cases.find { theCase -> theCase.matches(value as Any) }?.eval(value as Any)
 }
 
 
@@ -30,7 +33,7 @@ interface Stage<P, R> {
 }
 
 
-interface Case<O, R> {
+interface Case<O, in R> {
   fun matches(value: R): Boolean
   fun eval(value: R): O
   fun evalSafe(value: R): O? =

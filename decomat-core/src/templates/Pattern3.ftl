@@ -96,12 +96,12 @@
   [/@compress]
 [/#macro]
 
+[@output file="decomat-core/build/templates/io/decomat/Then2.kt"]
+package io.decomat
+
 [#list 0..3 as i1]
   [#list 0..3 as i2]
 [#-- fun <P1: Pattern1<P11, R11, R1>, P2: Pattern0<R2>, P11: Pattern<R11>, R11, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = Then10(pat, {true}) --]
-
-[@output file="decomat-core/build/templates/io/decomat/Then${i1}${i2}.kt"]
-package io.decomat
 
 fun <P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R> case(pat: [@Pattern 2 /]) = Then${i1}${i2}(pat, {true})
 
@@ -124,45 +124,43 @@ class Then${i1}${i2}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R>(
   inline fun <O> thenThis(crossinline f: R.() -> ([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
     StageCase(pat, check) { v -> useComponents(v, f(v)) }
 }
-[/@output]
-
   [/#list]
 [/#list]
+[/@output]
 
 
-[#list 0..3 as i1]
-  [#list 0..3 as i2]
-    [#list 0..3 as i3]
+[#--[@output file="decomat-core/build/templates/io/decomat/Then3.kt"]--]
+[#--package io.decomat--]
+
+[#--[#list 0..3 as i1]--]
+[#--  [#list 0..3 as i2]--]
+[#--    [#list 0..3 as i3]--]
 [#-- fun <P1: Pattern1<P11, R11, R1>, P2: Pattern0<R2>, P11: Pattern<R11>, R11, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = Then10(pat, {true}) --]
 
+[#--fun <P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], P3: [@PatternVars 3 i3 /], R> case(pat: [@Pattern 3 /]) = Then${i1}${i2}${i3}(pat, {true})--]
 
-[@output file="decomat-core/build/templates/io/decomat/Then${i1}${i2}${i3}.kt"]
-package io.decomat
+[#--class Then${i1}${i2}${i3}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], P3: [@PatternVars 3 i3 /], R>(--]
+[#--  override val pat: [@Pattern 3 /],--]
+[#--  override val check: (R) -> Boolean--]
+[#--): Stage<[@Pattern 3 /], R> {--]
 
-fun <P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], P3: [@PatternVars 3 i3 /], R> case(pat: [@Pattern 3 /]) = Then${i1}${i2}${i3}(pat, {true})
+[#--  inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O): O =--]
+[#--    (r as? ProductClass<*>)?.let {--]
+[#--      val (r1, r2, r3) = pat.divideIntoComponentsAny(it)--]
+[#--      [#if i1 != 0]val [@vars 1 i1 /] = pat.pattern1.divideIntoComponentsAny(r1 as Any)[#else]//skip[/#if]--]
+[#--      [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.divideIntoComponentsAny(r2 as Any)[#else]//skip[/#if]--]
+[#--      [#if i3 != 0]val [@vars 3 i3 /] = pat.pattern3.divideIntoComponentsAny(r3 as Any)[#else]//skip[/#if]--]
+[#--      f([@compVars3 i1, i2, i3 /])--]
+[#--    } ?: notRightCls(r)--]
 
-class Then${i1}${i2}${i3}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], P3: [@PatternVars 3 i3 /], R>(
-  override val pat: [@Pattern 3 /],
-  override val check: (R) -> Boolean
-): Stage<[@Pattern 3 /], R> {
+[#--  inline fun <O> then(crossinline f: ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O) =--]
+[#--    StageCase(pat, check) { value -> useComponents(value, f) }--]
 
-  inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O): O =
-    (r as? ProductClass<*>)?.let {
-      val (r1, r2, r3) = pat.divideIntoComponentsAny(it)
-      [#if i1 != 0]val [@vars 1 i1 /] = pat.pattern1.divideIntoComponentsAny(r1 as Any)[#else]//skip[/#if]
-      [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.divideIntoComponentsAny(r2 as Any)[#else]//skip[/#if]
-      [#if i3 != 0]val [@vars 3 i3 /] = pat.pattern3.divideIntoComponentsAny(r3 as Any)[#else]//skip[/#if]
-      f([@compVars3 i1, i2, i3 /])
-    } ?: notRightCls(r)
+[#--  inline fun <O> thenThis(crossinline f: R.() -> ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O) =--]
+[#--    StageCase(pat, check) { v -> useComponents(v, f(v)) }--]
+[#--}--]
 
-  inline fun <O> then(crossinline f: ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O) =
-    StageCase(pat, check) { value -> useComponents(value, f) }
-
-  inline fun <O> thenThis(crossinline f: R.() -> ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O) =
-    StageCase(pat, check) { v -> useComponents(v, f(v)) }
-}
-[/@output]
-
-    [/#list]
-  [/#list]
-[/#list]
+[#--    [/#list]--]
+[#--  [/#list]--]
+[#--[/#list]--]
+[#--[/@output]--]
