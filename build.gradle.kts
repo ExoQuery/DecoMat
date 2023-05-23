@@ -55,6 +55,11 @@ allprojects {
   }
 }
 
+java {
+  withJavadocJar()
+  withSourcesJar()
+}
+
 //publishing {
 //  publications {
 //    create<MavenPublication>("mavenJava") {
@@ -73,11 +78,6 @@ allprojects {
 
 subprojects {
   val varintName = project.name
-
-  java {
-    withJavadocJar()
-    withSourcesJar()
-  }
 
   publishing {
     publications {
