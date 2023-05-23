@@ -56,7 +56,6 @@ allprojects {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles Javadoc JAR"
     archiveClassifier.set("javadoc")
-    from(tasks.named("dokkaHtml"))
   }
 
   // Disable publishing for decomat examples
