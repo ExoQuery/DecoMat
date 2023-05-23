@@ -5,6 +5,7 @@ plugins {
   id("maven-publish")
   idea
   signing
+  id("org.jetbrains.dokka")
 }
 
 dependencies {

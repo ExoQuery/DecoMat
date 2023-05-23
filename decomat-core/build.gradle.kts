@@ -25,6 +25,7 @@ plugins {
     //      need to look into why freemarker can't be found if this plugin is removed.
     id("dev.anies.gradle.template")
     signing
+    id("org.jetbrains.dokka")
 }
 
 sourceSets["main"].kotlin.srcDir(file("build/templates"))
