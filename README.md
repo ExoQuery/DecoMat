@@ -29,7 +29,7 @@ someone match {
 Similarly, in Kotlin with Decomat you can do this:
 ```kotlin
 on(someone).match(
-  case( Customer[Name[Is("Joe"), Is()], Partner(Is())] )
+  case( Customer[Name[Is("Joe"), Is()], Partner[Is()]] )
     .then { first, last, id -> func(first, last, id) },
   case( Customer[Name[Is("Jack"), Is()], Organization[Is("BigOrg")]] )
     .then { first, last -> func(first, last) }
