@@ -20,7 +20,7 @@ apply(plugin = "io.github.gradle-nexus.publish-plugin")
 allprojects {
 
   group = "io.exoquery"
-  version = "0.0.1"
+  version = "0.0.4"
 
   apply(plugin = "kotlin")
   apply(plugin = "maven-publish")
@@ -44,6 +44,25 @@ allprojects {
 
     compileTestKotlin {
       kotlinOptions.jvmTarget = "1.8"
+    }
+  }
+
+  // Needed for maven publishing
+  val sourcesJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("sources")
+    from(kotlin.sourceSets.main.get().kotlin)
+  }
+  val javadocJar by tasks.creating(Jar::class) {
+    group = JavaBasePlugin.DOCUMENTATION_GROUP
+    description = "Assembles Javadoc JAR"
+    archiveClassifier.set("javadoc")
+    from(tasks.named("dokkaHtml"))
+  }
+
+  // Disable publishing for decomat examples
+  tasks.withType<PublishToMavenRepository>().configureEach {
+    onlyIf {
+      publication.artifactId == "decomat-examples"
     }
   }
 }

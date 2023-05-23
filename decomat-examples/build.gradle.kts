@@ -45,6 +45,5 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 
 dependencies {
   implementation(project(":decomat-core"))
-  implementation(project(":decomat-ksp"))
   ksp(project(":decomat-ksp"))
 }
