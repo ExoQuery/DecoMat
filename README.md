@@ -20,20 +20,47 @@ sealed trait Affiliate
 case class Partner(id: Int) extends Affiliate
 case class Organization(name: String) extends Affiliate
 
-someCustomer match {
-  case Customer(Name(first, last), Partner(id)) => func(first, last, id)
-  case Customer(Name(first, last), Organization("BigOrg")) => func(first, last)
+someone match {
+  case Customer(Name(first @ "Joe", last), Partner(id)) => func(first, last, id)
+  case Customer(Name(first @ "Jack", last), Organization("BigOrg")) => func(first, last)
 }
 ```
 
 Similarly, in Kotlin with Decomat you can do this:
 ```kotlin
-on(someCustomer).match(
-  case( Customer[Name[Is(), Is()], Partner(Is())] )
+on(someone).match(
+  case( Customer[Name[Is("Joe"), Is()], Partner(Is())] )
     .then { first, last, id -> func(first, last, id) },
-  case( Customer[Name[Is(), Is()], Organization[Is("BigOrg")]] )
+  case( Customer[Name[Is("Jack"), Is()], Organization[Is("BigOrg")]] )
     .then { first, last -> func(first, last) }
 )
+```
+
+Whereas normally the following would be needed:
+```kotlin
+when(someone) {
+  is Customer ->
+    if (someone.name.first == "Joe") {
+      val first = someone.name.first
+      val last = someone.name.last
+      when (someone.affiliate) {
+        is Partner -> {
+          val id = someone.affiliate.id
+          func(first, last, id)
+        }
+        else -> fail()
+      }
+    } else if (someone.name.first == "Jack") {
+      val first = someone.name.first
+      val last = someone.name.last
+      when (someone.affiliate) {
+        is Organization -> {
+          func(first, last)
+        }
+        else -> fail()
+      }
+    } else fail()
+}
 ```
 
 Decomat is not a full replacement of Scala's pattern-matching, but it does have some of the same 
