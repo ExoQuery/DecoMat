@@ -67,6 +67,8 @@ the cases where Scala ADT pattern matching is used:
 * No more than two components need to be deconstructed (3 will be partially supported soon)
 * The deconstruction itself does not need to be more than two levels deep
 * The components that need to be deconstructed are usually known as the ADT case-classes are being written.
+* Frequently, other parts of the main object need to be checked during the pattern matching but they do not 
+  need to be deconstructed. This can typically be done with a simple `if` statement (see `thenIfThis` below). 
 
 ## Tutorial
 
@@ -189,14 +191,15 @@ on(someone).match(
 
 ##### thenIfThis
 
-If you want to filter by a non `@Component` annoated field, you can use the `thenIfThis` method. For example:
+If you want to filter by a non `@Component` annoated field, you can use the `thenIfThis` method.
+This method allows you to use the pattern-matched object as a reciever. For example:
 
 ```kotlin
 @Matchable
 data class Customer(val something: String, @Component val name: Name, @Component val affiliate: Affiliate) { ... }
 
 on(something).match(
-  case( Customer[Is("something"), Name[Is(), Is()], Partner(Is())] )
+  case( Customer[Name[Is(), Is()], Partner(Is())] )
     .thenIfThis {{ first, last, id ->
       // Note that the first, last, and id properties are available here but you do not necessarily need to use them,
       // since you can use the `this` keyword to refer to the `Customer` instance (also `this` can be omitted entirely).
@@ -209,19 +212,70 @@ on(something).match(
 Here we are using the `Customer` class as a reciever in the `thenIfThis` class above. The properties
 `first`, `last`, and `id` are also available to use if you need them.
 
+> The actual signature of `thenIfThis` is: 
+> ```kotlin
+> R.() -> (component1, component2, ...) -> Boolean
+> ```
+> That is why the double braches `{{ ... }}` are needed.
+
 ##### thenThis
 
+If you want to use any fields of the pattern-matched object that are not one of the components, you can use the `thenThis` method.
+This method allows you to use the pattern-matched object as a reciever. For example:
+
+```kotlin
+@Matchable
+data class Customer(val something: String, @Component val name: Name, @Component val affiliate: Affiliate) {
+  val somethingElse = "somethingElse"
+  ...
+}
+
+on(something).match(
+  case( Customer[Name[Is(), Is()], Partner(Is())] )
+    .thenThis {{ first, last, id ->
+      // You can use the `this` keyword to refer to the `Customer` instance (also `this` can be omitted entirely).
+      // (the components first, last, id are also available here for convenience)
+      this.something + this.somethingElse
+    }}
+  // Other cases...
+)
+```
+
+## ADTs with Type Parameters (i.e. GADTs)
+
+Decomat supports ADTs with type parameters but they are not used in the Pattern-components. Instead,
+they are converted into start-projections. This is because typing all of the parameters would make the
+matching highly restrictive. (Also, type-parameters cannot be used as part of the pattern-matching
+due to type-erasure.)
+
+For example:
+```kotlin
+@Metadata
+sealed interface Query<T>
+data class Map<T, R>(@Component val head: Query<T>, @Component val body: Query<R>): Query<R> {
+  // ...
+}
+data class Entity<T>(@Component val value: T): Query<T> {
+  fun <R> someField(getter: () -> R): Query<R> = Property(this, getter())
+  // ...
+}
+```
+
+The `Query` interface is converted into a star-projection when it is used in a match.
+```kotlin
+on(query).match(
+  case( Map[Is(), Is()] )
+    .then { head: Query<*>, body: Query<*> -> func(head, body) },
+  case( Entity[Is()] )
+    .then { value: Entity<*> -> func(value) },
+  // Other cases...
+)
+```
+Notw how the `head` and `body` elements are star projections instead of the origin types?
+This is done so that the `Map` case can match any `Query` type, otherwise the matching logic would be too restrictive.
+(This maybe enhanced in the future.)
 
 
-
-
-
-## ADTs with Type Parameters
-
-
-
-TBD
-
-
+## Custom Patterns
 
 
