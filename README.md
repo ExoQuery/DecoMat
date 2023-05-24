@@ -41,21 +41,17 @@ Whereas normally the following would be needed:
 when(someone) {
   is Customer ->
     if (someone.name.first == "Joe") {
-      val first = someone.name.first
-      val last = someone.name.last
       when (val aff = someone.affiliate) {
         is Partner -> {
-          func(first, last, aff.id)
+          func(someone.name.first, someone.name.last, aff.id)
         }
         else -> fail()
       }
     } else if (someone.name.first == "Jack") {
-      val first = someone.name.first
-      val last = someone.name.last
       when (val aff = someone.affiliate) {
         is Organization -> {
           if (aff.name == "BigOrg") {
-            func(first, last)
+            func(someone.name.first, someone.name.last)
           } else fail()
         }
         else -> fail()
