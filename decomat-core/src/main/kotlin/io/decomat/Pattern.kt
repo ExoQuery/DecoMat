@@ -25,7 +25,7 @@ abstract class Pattern1<P1: Pattern<R1>, R1, R>(val pattern1: P1, override val t
         else -> false
       }
 
-  fun divideIntoComponentsAny(instance: kotlin.Any): Components1<R1> =
+  open fun divideIntoComponentsAny(instance: kotlin.Any): Components1<R1> =
     when(instance) {
       is HasProductClass<*> ->
         divideIntoComponentsAny(instance.productComponents)
@@ -36,10 +36,13 @@ abstract class Pattern1<P1: Pattern<R1>, R1, R>(val pattern1: P1, override val t
             )
         ) fail("The type ${instance.value} is not a ${typeR.type}")  // todo refine message
         else divideIntoComponents(instance as ProductClass<R>)
-      else -> fail("Cannot divide $instance into components. It is not a product-class.")
+      else -> failToDivide(instance)
     }
 
-  fun divideIntoComponents(instance: ProductClass<R>): Components1<R1> =
+  protected fun failToDivide(value: kotlin.Any): Nothing =
+    fail("Cannot divide $value into components. It is not a product-class.")
+
+  open fun divideIntoComponents(instance: ProductClass<R>): Components1<R1> =
     when(val inst = instance.isIfHas()) {
       is ProductClass1<*, *> -> Components1(inst.a as R1)
       else -> fail("must match properly") // todo refine message

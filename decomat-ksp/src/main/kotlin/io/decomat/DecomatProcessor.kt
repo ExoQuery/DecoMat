@@ -71,9 +71,12 @@ class DecomatProcessor(
     val useSiteName =
       if (useStarProjection && ksClass.typeParameters.isNotEmpty())
         ksClass.asStarProjectedType().toString()
-      else
+      else if (ksClass.typeParameters.isNotEmpty())
         // Actually get the full projection of hte class e.g. Query<T> instead of Query<*>. Not sure how to actually get `Query<T>` as a string from a KSClassDeclaration
         "${ksClass.simpleName.getShortName()}<${ksClass.typeParameters.map { it.name.getShortName() }.joinToString(", ")}>" //.asStarProjectedType().toString()
+      else
+        // Otherwise it's not a star-projection and we can use the plain class name
+        ksClass.toString()
 
       companion object {
       fun fromClassAndMembers(ksClass: KSClassDeclaration, ksParams: List<KSValueParameter>, useStarProjection: Boolean): GenModel {
