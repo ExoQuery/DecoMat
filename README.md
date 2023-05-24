@@ -10,8 +10,8 @@ ksp("io.exoquery:decomat-ksp:0.0.1")
 
 ## Introduction
 
-Decomat is a library that gives Kotlin a way to do pattern-matching on ADTs (Algebraic Data Types) in a way similar 
-to Scala's pattern-matching. For example:
+Decomat is a library that gives Kotlin a way to do pattern-matching on ADTs (Algebraic Data Types) in a way 
+that is similar to Scala's pattern-matching. For example:
 
 ```scala
 case class Customer(name: Name, affiliate: Affiliate)
@@ -43,19 +43,20 @@ when(someone) {
     if (someone.name.first == "Joe") {
       val first = someone.name.first
       val last = someone.name.last
-      when (someone.affiliate) {
+      when (val aff = someone.affiliate) {
         is Partner -> {
-          val id = someone.affiliate.id
-          func(first, last, id)
+          func(first, last, aff.id)
         }
         else -> fail()
       }
     } else if (someone.name.first == "Jack") {
       val first = someone.name.first
       val last = someone.name.last
-      when (someone.affiliate) {
+      when (val aff = someone.affiliate) {
         is Organization -> {
-          func(first, last)
+          if (aff.name == "BigOrg") {
+            func(first, last)
+          } else fail()
         }
         else -> fail()
       }
