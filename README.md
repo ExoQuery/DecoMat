@@ -150,6 +150,22 @@ on(someone).match(
   // Other cases...
 }
 ```
+Note that Scala also allows you to match a variable based on just a type. For example:
+```scala
+someone match {
+  case Customer(Name(first, last), partner: Partner) => func(first, last, part)
+}
+```
+In Decomat, you can do using the the `Is` function with a type and empty parameter-list.
+```kotlin
+on(someone).match(
+  case( Customer[Name[Is(), Is()], Is<Partner>()] )
+    // Note how since we are not deconstructing the Partner class anymore, the 3rd parameter
+    // switches from the `id: Int` type to the `partner: Partner` type.
+    .then { first, last, partner /*: Partner*/ -> func(first, last, partner) },
+  // Other cases...
+)
+```
 
 There are several other methods provided for pattern-matching convenience.
 
