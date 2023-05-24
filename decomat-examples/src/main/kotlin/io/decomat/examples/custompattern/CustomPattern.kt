@@ -14,12 +14,21 @@ data class Person(@Component val name: Name, @Component val age: Int): HasProduc
   companion object {}
 }
 
-data class FirstName(val first: Pattern0<String>): Pattern1<Pattern0<String>, String, Name>(first, Typed<Name>()) {
+data class FirstName(val nameString: Pattern0<String>): Pattern1<Pattern0<String>, String, Name>(nameString, Typed<Name>()) {
   val matchName: (Name) -> Components1<String>? = {
     when(it) {
-      is SimpleName -> Components1(it.first)
-      is FullName -> Components1(it.first)
-      // TODO a case where the match fails
+      is SimpleName ->
+        // TODO If the thing inside nameString is a ProductClass don't need to create a ProductClass0 first
+        //      probably can do that with an `it is ProductClass` flag
+        if (nameString.matchesAny(ProductClass0(it.first)))
+          Components1(it.first)
+        else
+          null
+      is FullName ->
+        if (nameString.matchesAny(ProductClass0(it.first)))
+          Components1(it.first)
+        else
+          null
     }
   }
 
@@ -46,10 +55,18 @@ fun main() {
 
   val out =
     on(p).match(
-      case(Person[FirstName[Is()], Is()]).then { (firstName), age -> Pair(firstName, age) }
+      case(Person[FirstName[Is("Jack")], Is()]).then { (firstName), age -> Pair(firstName, age) }
     )
 
   println(out)
+
+  val out1 =
+    on(p).match(
+      case(Person[FirstName[Is("John")], Is()]).then { (firstName), age -> Pair(firstName, age) }
+    )
+
+  println(out1)
 }
+
 
 
