@@ -271,10 +271,11 @@ on(query).match(
   // Other cases...
 )
 ```
-Notw how the `head` and `body` elements are star projections instead of the origin types?
+Note how the `head` and `body` elements are star projections instead of the origin types?
 This is done so that the `Map` case can match any `Query` type, otherwise the matching logic would be too restrictive.
-(This maybe enhanced in the future.)
+(E.g. it would be difficult to deduce the type of the `head` and `body` elements causing the generated code to be incorrect)
 
+If you want to experiment with fully-typed ADT-components nonetheless, use `@Matchable(simplifyTypes = false)`.
 
 ## Custom Patterns
 

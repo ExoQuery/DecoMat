@@ -1,5 +1,6 @@
 package io.decomat
 
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.innerArguments
 import com.google.devtools.ksp.isLocal
 import com.google.devtools.ksp.processing.*
@@ -7,6 +8,7 @@ import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
+import java.awt.Component
 
 class DecomatProcessor(
   private val logger: KSPLogger,
@@ -20,6 +22,9 @@ class DecomatProcessor(
         .mapNotNull { sym ->
           when {
             sym is KSClassDeclaration && sym.classKind == ClassKind.CLASS -> {
+              val useStarProjection =
+                sym.annotations.find { it.shortName.getShortName() == "Matchable" }?.arguments?.get(0)?.value as? Boolean ?: true
+
               // TODO also allow annotation on values in body (maybe even methods?)
               val componentElements =
                 sym.primaryConstructor?.parameters?.filter {
@@ -29,7 +34,7 @@ class DecomatProcessor(
                   isVal && hasAnnotation
                 } ?: emptyList()
 
-              Pair(sym as KSClassDeclaration, componentElements)
+              Triple(sym as KSClassDeclaration, componentElements, useStarProjection)
             }
             else ->
               null
@@ -43,31 +48,35 @@ class DecomatProcessor(
       logger.warn("Found the following classes/components with the @Matchable/@Component annotations: ${description}")
     }
 
-    componentsToGen.forEach { (cls, members) ->
+    componentsToGen.forEach { (cls, members, useStarProjection) ->
       // TODO Need to test
       if (members.size > 3) {
         logger.error("The Matchable class ${cls.simpleName.asString()} has more than 3 components (i.e. ${members.size}). No more than 3 are supported so far.")
       }
 
-      generateExtensionFunction(GenModel.fromClassAndMembers(cls, members))
+      generateExtensionFunction(GenModel.fromClassAndMembers(cls, members, useStarProjection))
     }
 
     return listOf()
   }
 
-  data class GenModel private constructor(val imports: List<String>, val members: List<Member>, val ksClass: KSClassDeclaration) {
+  data class GenModel private constructor(val imports: List<String>, val members: List<Member>, val ksClass: KSClassDeclaration, val useStarProjection: Boolean) {
     val packageName = ksClass.packageName.asString()
     val className = ksClass.simpleName.asString()
     val fullClassName = ksClass.qualifiedName?.asString()
     // since we are going to add components to the imports, use regular name for the use-site
     // also, we want star projections e.g. for FlatMap<T, R> use FlatMap<*, *>
 
-    //val useSiteName = "${ksClass.simpleName.getShortName()}<${ksClass.typeParameters.map { it.name.getShortName() }.joinToString(", ")}>" //.asStarProjectedType().toString()
     // using the logic above removes star projections but seems to be too strict logically
-    val useSiteName = ksClass.asStarProjectedType().toString()
+    val useSiteName =
+      if (useStarProjection && ksClass.typeParameters.isNotEmpty())
+        ksClass.asStarProjectedType().toString()
+      else
+        // Actually get the full projection of hte class e.g. Query<T> instead of Query<*>. Not sure how to actually get `Query<T>` as a string from a KSClassDeclaration
+        "${ksClass.simpleName.getShortName()}<${ksClass.typeParameters.map { it.name.getShortName() }.joinToString(", ")}>" //.asStarProjectedType().toString()
 
       companion object {
-      fun fromClassAndMembers(ksClass: KSClassDeclaration, ksParams: List<KSValueParameter>): GenModel {
+      fun fromClassAndMembers(ksClass: KSClassDeclaration, ksParams: List<KSValueParameter>, useStarProjection: Boolean): GenModel {
         val members = ksParams.map { param ->
           val tpe = param.type.resolve()
           val decl = tpe.declaration
@@ -82,7 +91,13 @@ class DecomatProcessor(
 
           // for the parameters, if they have generic types you we want those to have starts e.g. Query<*> if it's Query<T>
           // NOTE: Removing `.starProjection()` makes type work (mostly) but seems to make matching too strict
-          val name = param.type.resolve().starProjection().toString()
+          val name =
+            param.type.resolve().let { paramTpe ->
+              if (useStarProjection)
+                paramTpe.starProjection().toString()
+              else
+                paramTpe.toString()
+            }
 
           Member(name, fullName, param)
         }
@@ -93,7 +108,7 @@ class DecomatProcessor(
         val additionalImports =
           classFullNameListElem + members.mapNotNull { it.fullName }
 
-        return GenModel(defaultImports + additionalImports.distinct(), members, ksClass)
+        return GenModel(defaultImports + additionalImports.distinct(), members, ksClass, useStarProjection)
       }
 
       val defaultImports = listOf(
