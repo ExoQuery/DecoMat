@@ -4,8 +4,15 @@ sealed interface Pattern<R> {
   val typeR: Typed<R>
   fun matches(comps: ProductClass<R>): Boolean
   @Suppress("UNCHECKED_CAST")
-  fun matchesAny(comps: ProductClass<*>): Boolean =
-    isType(comps.value, typeR.type) && matches(comps as ProductClass<R>)
+  fun matchesAny(comps: Any): Boolean =
+    when(comps) {
+      is ProductClass<*> ->
+        isType(comps.value, typeR.type) && matches(comps as ProductClass<R>)
+      else -> {
+        val compsReal = ProductClass0(comps)
+        isType(compsReal.value, typeR.type) && matches(compsReal as ProductClass<R>)
+      }
+    }
 }
 
 // TODO write a custom function with Pattern etc... that is equivalen of `unapply`. They need to be open classes

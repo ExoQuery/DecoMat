@@ -14,18 +14,82 @@ data class Person(@Component val name: Name, @Component val age: Int): HasProduc
   companion object {}
 }
 
+
+inline fun <P1 : Pattern<R1>, R1, reified R> customPattern1(
+  nested1: P1,
+  noinline matchName: (R) -> Components1<R1>?
+) = CustomPattern1(nested1, matchName, Typed<R>())
+
+object FirstName2 {
+  operator fun get(nameString: Pattern0<String>) =
+    customPattern1(nameString) { it: Name ->
+      when(it) {
+        is SimpleName ->
+          if (nameString.matchesAny(it.first))
+            Components1(it.first)
+          else
+            null
+        is FullName ->
+          if (nameString.matchesAny(it.first))
+            Components1(it.first)
+          else
+            null
+        else ->
+          null
+      }
+    }
+}
+
+//fun FirstName2(nameString: Pattern0<String>) =
+//  customPattern1(nameString) { it: Name ->
+//    when(it) {
+//      is SimpleName ->
+//        if (nameString.matchesAny(it.first))
+//          Components1(it.first)
+//        else
+//          null
+//      is FullName ->
+//        if (nameString.matchesAny(it.first))
+//          Components1(it.first)
+//        else
+//          null
+//      else ->
+//        null
+//    }
+//  }
+
+class CustomPattern1<P1 : Pattern<R1>, R1, R>(
+  val nested1: P1,
+  val matchName: (R) -> Components1<R1>?,
+  val tpe: Typed<R>
+): Pattern1<P1, R1, R>(nested1, tpe) {
+  override fun matches(comps: ProductClass<R>): Boolean =
+    matchName(comps.value) != null
+
+  override fun divideIntoComponents(instance: ProductClass<R>): Components1<R1> =
+    matchName(instance.value) ?: failToDivide(instance)
+
+  override fun divideIntoComponentsAny(instance: kotlin.Any): Components1<R1> =
+    if (isType(instance, tpe.type))
+      matchName(instance as R) ?: failToDivide(instance)
+    else
+      failToDivide(instance)
+}
+
+
+
 data class FirstName(val nameString: Pattern0<String>): Pattern1<Pattern0<String>, String, Name>(nameString, Typed<Name>()) {
   val matchName: (Name) -> Components1<String>? = {
     when(it) {
       is SimpleName ->
         // TODO If the thing inside nameString is a ProductClass don't need to create a ProductClass0 first
         //      probably can do that with an `it is ProductClass` flag
-        if (nameString.matchesAny(ProductClass0(it.first)))
+        if (nameString.matchesAny(it.first))
           Components1(it.first)
         else
           null
       is FullName ->
-        if (nameString.matchesAny(ProductClass0(it.first)))
+        if (nameString.matchesAny(it.first))
           Components1(it.first)
         else
           null
@@ -55,14 +119,14 @@ fun main() {
 
   val out =
     on(p).match(
-      case(Person[FirstName[Is("Jack")], Is()]).then { (firstName), age -> Pair(firstName, age) }
+      case(Person[FirstName2[Is("Jack")], Is()]).then { (firstName), age -> Pair(firstName, age) }
     )
 
   println(out)
 
   val out1 =
     on(p).match(
-      case(Person[FirstName[Is("John")], Is()]).then { (firstName), age -> Pair(firstName, age) }
+      case(Person[FirstName2[Is("John")], Is()]).then { (firstName), age -> Pair(firstName, age) }
     )
 
   println(out1)
