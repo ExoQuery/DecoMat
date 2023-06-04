@@ -16,8 +16,6 @@ sealed interface ProductClass<T> {
     }
 }
 
-private fun fail(msg: String): Nothing = throw IllegalArgumentException(msg)
-
 // Does not seem to work, no annotations are found
 //@Suppress("UNCHECKED_CAST")
 //interface HasProductClassAuto<T>: HasProductClass<T> {

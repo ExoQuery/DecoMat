@@ -46,7 +46,22 @@ allprojects {
     compileTestKotlin {
       kotlinOptions.jvmTarget = "1.8"
     }
+
+    compileTestJava {
+      targetCompatibility
+    }
   }
+
+  java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+  }
+
+  // Can also do this instead of above, for more details
+  // see here: https://stackoverflow.com/questions/69079963/how-to-set-compilejava-task-11-and-compilekotlin-task-1-8-jvm-target-com
+  //  java {
+  //    toolchain.languageVersion.set(JavaLanguageVersion.of(11))
+  //  }
 
   // Disable publishing for decomat examples
   tasks.withType<PublishToMavenRepository>().configureEach {

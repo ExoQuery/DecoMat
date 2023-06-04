@@ -1,7 +1,5 @@
 package io.decomat
 
-private fun fail(msg: String): Nothing = throw IllegalArgumentException(msg)
-
 // TODO need to test this with null
 @Suppress("UNCHECKED_CAST")
 internal fun <C> wrapNonComps(a: kotlin.Any?) =
