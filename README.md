@@ -294,42 +294,6 @@ on(something).match(
 )
 ```
 
-## ADTs with Type Parameters (i.e. GADTs)
-
-Decomat supports ADTs with type parameters but they are not used in the Pattern-components. Instead,
-they are converted into start-projections. This is because typing all of the parameters would make the
-matching highly restrictive. (Also, type-parameters cannot be used as part of the pattern-matching
-due to type-erasure.)
-
-For example:
-```kotlin
-@Metadata
-sealed interface Query<T>
-data class Map<T, R>(@Component val head: Query<T>, @Component val body: Query<R>): Query<R> {
-  // ...
-}
-data class Entity<T>(@Component val value: T): Query<T> {
-  fun <R> someField(getter: () -> R): Query<R> = Property(this, getter())
-  // ...
-}
-```
-
-The `Query` interface is converted into a star-projection when it is used in a match.
-```kotlin
-on(query).match(
-  case( Map[Is(), Is()] )
-    .then { head: Query<*>, body: Query<*> -> func(head, body) },
-  case( Entity[Is()] )
-    .then { value: Entity<*> -> func(value) },
-  // Other cases...
-)
-```
-Note how the `head` and `body` elements are star projections instead of the origin types?
-This is done so that the `Map` case can match any `Query` type, otherwise the matching logic would be too restrictive.
-(E.g. it would be difficult to deduce the type of the `head` and `body` elements causing the generated code to be incorrect)
-
-If you want to experiment with fully-typed ADT-components nonetheless, use `@Matchable(simplifyTypes = false)`.
-
 ## Custom Patterns
 
 One extremely powerful feature of Scala pattern-matching is that one can use custom patterns in a composable manner.
@@ -449,3 +413,40 @@ object FirstLast {
     }
 }
 ```
+
+## ADTs with Type Parameters (i.e. GADTs)
+
+Decomat supports ADTs with type parameters but they are not used in the Pattern-components. Instead,
+they are converted into start-projections. This is because typing all of the parameters would make the
+matching highly restrictive. (Also, type-parameters cannot be used as part of the pattern-matching
+due to type-erasure.)
+
+For example:
+```kotlin
+@Metadata
+sealed interface Query<T>
+data class Map<T, R>(@Component val head: Query<T>, @Component val body: Query<R>): Query<R> {
+  // ...
+}
+data class Entity<T>(@Component val value: T): Query<T> {
+  fun <R> someField(getter: () -> R): Query<R> = Property(this, getter())
+  // ...
+}
+```
+
+The `Query` interface must be up-casted into into a star-projection when it is used in a match.
+```kotlin
+val query: Query<Something> = ...
+on(query as Query<*>).match(
+  case( Map[Is(), Is()] )
+    .then { head: Query<*>, body: Query<*> -> func(head, body) },
+  case( Entity[Is()] )
+    .then { value: Entity<*> -> func(value) },
+  // Other cases...
+)
+```
+Note how the `head` and `body` elements are star projections instead of the origin types?
+This is done so that the `Map` case can match any `Query` type, otherwise the matching logic would be too restrictive.
+(E.g. it would be difficult to deduce the type of the `head` and `body` elements causing the generated code to be incorrect)
+
+If you want to experiment with fully-typed ADT-components nonetheless, use `@Matchable(simplifyTypes = false)`.
