@@ -390,10 +390,12 @@ val out =
 
 
 
-Note that in Scala pattern, matches it is common to use pattern matching itself in order to deconstruct
+Note that when Scala pattern matching clauses get complex, it is common to use pattern matching itself in order to deconstruct
 patterns into smaller patterns. That means that if we make `SimpleName` and `FullName` matchable, we can
-use them with Decomat's matching which is more powerful than the Kotlin `when` statement. For example:
+use them with Decomat's matching instead of Kotlin `when` statement. This gives us more versatility.
+For example:
 ```kotlin
+// Annotate SimpleName and FullName as @Matchable in additionl to `Person`
 @Matchable
 data class Person(@Component val name: Name, @Component val age: Int): HasProductClass<Person> {
   override val productComponents = ProductClass2(this, name, age)
@@ -411,8 +413,7 @@ data class FullName(@Component val first: String, val middle: String, @Component
   companion object { }
 }
 
-// Then create our custom pattern matcher. Use the customPattern1 or customPattern2 functions to create the custom pattern
-// Now we can use pattern-matching to power the FirstLast matching logic:
+// Then create our custom pattern matcher which itself uses on/match functions:
 object FirstLast {
   operator fun get(first: Pattern0<String>, last: Pattern0<String>) =
     customPattern2(first, last) { it: Name ->
@@ -432,8 +433,10 @@ val out =
 ```
 
 This latter approach is particularly useful when you want the custom pattern matching function itself to have
-nested conditional logic:
+complex nested conditional logic. For example:
 ```kotlin
+// Match all full-names where the first-name is "Joe" or "Jack"
+// Match all simple-names where the last-name is "Bloggs" and "Roogs"
 object FirstLast {
   operator fun get(first: Pattern0<String>, last: Pattern0<String>) =
     customPattern2(first, last) { it: Name ->
