@@ -4,8 +4,8 @@ Scala-Style Deconstructive Pattern-Matching for Kotlin.
 
 Decomat is available on Maven Central. To use it, add the following to your `build.gradle.kts`:
 ```
-implementation("io.exoquery:decomat-core:0.0.1")
-ksp("io.exoquery:decomat-ksp:0.0.1")
+implementation("io.exoquery:decomat-core:0.0.2")
+ksp("io.exoquery:decomat-ksp:0.0.2")
 ```
 
 ## Introduction
