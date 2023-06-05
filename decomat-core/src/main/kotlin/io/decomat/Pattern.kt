@@ -9,8 +9,13 @@ sealed interface Pattern<R> {
   @Suppress("UNCHECKED_CAST")
   fun matchesAny(comps: Any): Boolean =
     when(comps) {
-      is ProductClass<*> ->
+      is ProductClass<*> -> {
+        if (isType(comps.value, typeR.type) && !matches(comps as ProductClass<R>)) {
+          val m = matches(comps as ProductClass<R>)
+          println("stop here!")
+        }
         isType(comps.value, typeR.type) && matches(comps as ProductClass<R>)
+      }
       else -> {
         val compsReal = ProductClass0(comps)
         isType(compsReal.value, typeR.type) && matches(compsReal as ProductClass<R>)
