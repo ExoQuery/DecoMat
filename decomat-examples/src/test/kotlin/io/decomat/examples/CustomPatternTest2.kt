@@ -42,7 +42,7 @@ class CustomPatternTest2 {
 
   @Test
   fun matchTwoFirst() {
-    val p = Person(SimpleName("Joe", "Doe"), 42)
+    val p = Person(SimpleName("John", "Doe"), 42)
     val out1 =
       on(p).match(
         case(Person[FirstLast[Is("John"), Is("Doe")], Is()]).then { (first, last), age -> Triple(first, last, age) }
