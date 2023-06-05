@@ -18,11 +18,6 @@ kotlin.sourceSets.main {
   )
 }
 
-//tasks.withType<KspTask> {
-//
-//}
-
-
 /**
  * While using Java 11 need to configure it this way or an error will be thrown:
  *   Execution failed for task ':decomat-examples:kspKotlin'.
@@ -45,5 +40,11 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 
 dependencies {
   implementation(project(":decomat-core"))
+  testImplementation("org.testng:testng:7.1.0")
   ksp(project(":decomat-ksp"))
+  testImplementation(kotlin("test"))
+}
+
+tasks.named<Test>("test") {
+  useJUnitPlatform()
 }

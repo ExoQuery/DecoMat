@@ -29,7 +29,7 @@ fun main() {
   // Need to use this instead of `match` since the types are generic
 
   val out =
-    on(fm).match(
+    on(fm as Query<*>).match(
       case(FlatMap[Entity[Is("foo")], Is<Entity<Int>>()]).then { (str), query -> Pair(str, query) }
     )
 

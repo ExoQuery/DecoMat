@@ -34,7 +34,32 @@ class DecomatProcessor(
                   isVal && hasAnnotation
                 } ?: emptyList()
 
-              Triple(sym as KSClassDeclaration, componentElements, useStarProjection)
+              if (componentElements.isEmpty()) {
+                logger.error("No @Component parameters found in the primary constructor of the class $sym")
+              }
+
+              //logger.warn("Super types for: ${sym}: ${sym.superTypes.toList()}")
+              //sym.superTypes.forEach { logger.warn("----------- Qualified Class: ${it.resolve().declaration.qualifiedName?.asString()}") }
+
+              if (sym.superTypes.find {
+                val name = it.resolve().declaration.qualifiedName?.asString()
+                name == "io.decomat.HasProductClass" || name == "io.decomat.ProductClass"
+              } == null) {
+                logger.error("""
+                  The class $sym is not a subtype of io.decomat.HasProductClass or io.decomat.ProductClass.
+                  In order to be able to annotate this class with @Matchable do make it extend HasProductClass
+                  and add a `productComponents` product approximately like this:
+                  (plus/minus any generic parameters and any subclasses you may want to add...)
+                  ---
+                  data class $sym(...): HasProductClass<$sym> {
+                    override val productComponents = productComponentsOf(this, ${componentElements.joinToString(", ")})
+                    // Need at least an empty companion object, can put whatever you want inside
+                    companion object { }
+                  }
+                """.trimIndent())
+              }
+
+              Triple(sym, componentElements, useStarProjection)
             }
             else ->
               null
@@ -71,9 +96,12 @@ class DecomatProcessor(
     val useSiteName =
       if (useStarProjection && ksClass.typeParameters.isNotEmpty())
         ksClass.asStarProjectedType().toString()
-      else
+      else if (ksClass.typeParameters.isNotEmpty())
         // Actually get the full projection of hte class e.g. Query<T> instead of Query<*>. Not sure how to actually get `Query<T>` as a string from a KSClassDeclaration
         "${ksClass.simpleName.getShortName()}<${ksClass.typeParameters.map { it.name.getShortName() }.joinToString(", ")}>" //.asStarProjectedType().toString()
+      else
+        // Otherwise it's not a star-projection and we can use the plain class name
+        ksClass.toString()
 
       companion object {
       fun fromClassAndMembers(ksClass: KSClassDeclaration, ksParams: List<KSValueParameter>, useStarProjection: Boolean): GenModel {

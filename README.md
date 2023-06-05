@@ -241,6 +241,59 @@ on(something).match(
 )
 ```
 
+##### Is
+
+The `Is(...)` pattern is use to match the innermost patterns. It can be use to match by value, or by type.
+
+Matching by value:
+```kotlin
+```kotlin
+// Match only when affiliate is a Partner with id 123
+on(something).match(
+  case( Customer[..., Is(Partner(123))] ).then { ... },
+  // Other cases...
+)
+```
+
+Matching by type:
+```kotlin
+// Match only when affiliate is of the type: Partner
+on(something).match(
+  case( Customer[..., Is<Partner>] ).then { ... },
+  // Other cases...
+)
+```
+
+It is also possible to use the `Is` pattern to match by a custom predicate. Use this for more complex pattern
+matching but be warned that it may be less performant than the other methods because the predicate does not inline.
+```kotlin
+on(something).match(
+  case( Customer[..., Is<Partner> { p -> (p.id == 123 || p.id == 456) }] ).then { ... },
+  // Other cases...
+)
+```
+
+You can also define custom Is-variants based on predicates for example:
+```kotlin
+def isPartnerWithIds(vararg ids: Int) = IsIs<Partner> { p -> p is Partner && ids.contains(p.id) }
+on(something).match(
+  case( Customer[..., isPartnerWithIds(123, 456)] ).then { ... },
+  // Other cases...
+)
+```
+
+Note that in many cases, you can use the `thenIf` method instead of the `Is { ... }` predicate function which
+does inline leading to better performance.
+```kotlin
+on(something).match(
+  case( Customer[..., Is<Partner>() )
+    // This will be inlined
+    .thenIf { _, aff -> aff is Partner && (aff.id == 123 || aff.id == 456) }
+    .then { ... },
+  // Other cases...
+)
+```
+
 ## ADTs with Type Parameters (i.e. GADTs)
 
 Decomat supports ADTs with type parameters but they are not used in the Pattern-components. Instead,
@@ -276,3 +329,120 @@ This is done so that the `Map` case can match any `Query` type, otherwise the ma
 (E.g. it would be difficult to deduce the type of the `head` and `body` elements causing the generated code to be incorrect)
 
 If you want to experiment with fully-typed ADT-components nonetheless, use `@Matchable(simplifyTypes = false)`.
+
+## Custom Patterns
+
+One extremely powerful feature of Scala pattern-matching is that one can use custom patterns in a composable manner.
+For example:
+```scala
+// Create a Data model
+case class Person(name: Name, age: Int)
+sealed trait Name
+case class SimpleName(first: String, last: String) extends Name
+case class FullName(first: String, middle: String, last: String) extends Name
+
+// Create a custom pattern
+object FirstLast {
+  def unapply(name: Name): Option[(String, String)] = name match {
+    case SimpleName(first, last) => Some(first, last)
+    case FullName(first, _, last) => Some(first, last)
+    case _ => None
+  }
+}
+
+// Now we can use the pattern to match and extract custom data
+val p: Person = ...
+p match {
+  case Person(FirstLast("Joe", last), age) => ...
+}
+```
+Similarly, Decomat allows you to create custom patterns. For example:
+```kotlin
+// First Create our data model
+@Matchable
+data class Person(@Component val name: Name, @Component val age: Int): HasProductClass<Person> {
+  override val productComponents = ProductClass2(this, name, age)
+  companion object { }
+}
+sealed interface Name
+data class SimpleName(val first: String, val last: String): Name
+data class FullName(val first: String, val middle: String, val last: String): Name
+
+// Then create our custom pattern matcher. Use the customPattern1 or customPattern2 functions to create the custom pattern.
+object FirstLast {
+  operator fun get(first: Pattern0<String>, last: Pattern0<String>) =
+    customPattern2(first, last) { it: Name ->
+      when(it) {
+        is SimpleName -> first.matches(it.first) && last.matches(it.last)
+        is FullName -> first.matches(it.first) && last.matches(it.last)
+        else -> false
+      }
+    }
+}
+
+// Then use the `FirstLast` custom pattern to match and extract data
+val p: Person = ...
+val out =
+  on(p).match(
+    case(Person[FirstLast[Is("Joe"), Is()], Is()]).then { (first, last), age -> ... }
+  )
+```
+
+
+
+Note that in Scala pattern, matches it is common to use pattern matching itself in order to deconstruct
+patterns into smaller patterns. That means that if we make `SimpleName` and `FullName` matchable, we can
+use them with Decomat's matching which is more powerful than the Kotlin `when` statement. For example:
+```kotlin
+@Matchable
+data class Person(@Component val name: Name, @Component val age: Int): HasProductClass<Person> {
+  override val productComponents = ProductClass2(this, name, age)
+  companion object { }
+}
+sealed interface Name
+@Matchable
+data class SimpleName(@Component val first: String, @Component val last: String): Name, HasProductClass<SimpleName> {
+  override val productComponents = ProductClass2(this, first, last)
+  companion object { }
+}
+@Matchable
+data class FullName(@Component val first: String, val middle: String, @Component val last: String): Name, HasProductClass<FullName> {
+  override val productComponents = ProductClass3(this, first, middle, last)
+  companion object { }
+}
+
+// Then create our custom pattern matcher. Use the customPattern1 or customPattern2 functions to create the custom pattern
+// Now we can use pattern-matching to power the FirstLast matching logic:
+object FirstLast {
+  operator fun get(first: Pattern0<String>, last: Pattern0<String>) =
+    customPattern2(first, last) { it: Name ->
+      on(it).match(
+        case(FullName[Is(), Is()]).then { first, last -> Components2(first, last) },
+        case(SimpleName[Is(), Is()]).then { first, last -> Components2(first, last) }
+      )
+    }
+}
+
+// Then use the `FirstLast` custom pattern to match and extract data the same as before...
+val p: Person = ...
+val out =
+  on(p).match(
+    case(Person[FirstLast[Is("Joe"), Is()], Is()]).then { (first, last), age -> ... }
+  )
+```
+
+This latter approach is particularly useful when you want the custom pattern matching function itself to have
+nested conditional logic:
+```kotlin
+object FirstLast {
+  operator fun get(first: Pattern0<String>, last: Pattern0<String>) =
+    customPattern2(first, last) { it: Name ->
+      on(it).match(
+        case(FullName[Is { it == "Joe" || it == "Jack" }, Is()])
+          .then { first, last -> Components2(first, last) },
+        case(SimpleName[Is(), Is { it == "Bloggs" || it == "Roogs" }])
+          .then { first, last -> Components2(first, last) }
+      )
+    }
+}
+```

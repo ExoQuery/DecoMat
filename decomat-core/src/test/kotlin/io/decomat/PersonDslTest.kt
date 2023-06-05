@@ -24,6 +24,35 @@ class PersonDslTest: DecomatTest {
   }
 
   @Test
+  fun `Person(Name(== "Joe", Is))`() {
+    val result =
+      on(Person(Name("Joe", "Bloggs"), 123)).match(
+        case(Person[Name[Is {it == "Joe"}, Is {it == "Roggs"}]])
+          .then { name -> wrongAnswer },
+        case(Person[Name[Is(), Is {it == "Roggs"}]])
+          .then { name -> wrongAnswer },
+        case(Person[Name[Is {it == "Joe"}, Is {it == "Bloggs"}]])
+          .then { name -> Res1(name) }
+      )
+
+    assertEquals(result, Res1(Name("Joe", "Bloggs")))
+  }
+
+  @Test
+  fun `Person(Name(== "Joe" or "Jack", Is))`() {
+    fun isOneOf(vararg ids: String) = Is<String> { ids.contains(it) }
+    val result =
+      on(Person(Name("Joe", "Bloggs"), 123)).match(
+        case(Person[Name[isOneOf("Bill", "Will"), Is()]])
+          .then { name -> wrongAnswer },
+        case(Person[Name[isOneOf("Joe", "Jack"), Is()]])
+          .then { name -> Res1(name) }
+      )
+
+    assertEquals(result, Res1(Name("Joe", "Bloggs")))
+  }
+
+  @Test
   fun `Person(Name("Joe", Is)) - Decompose`() {
     val result =
       on(Person(Name("Joe", "Bloggs"), 123)).match(
