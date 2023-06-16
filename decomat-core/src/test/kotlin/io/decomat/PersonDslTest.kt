@@ -17,10 +17,10 @@ class PersonDslTest: DecomatTest {
         case(Person[Name[Is(), Is("Roggs")]])
           .then { name -> wrongAnswer },
         case(Person[Name[Is("Joe"), Is("Bloggs")]])
-          .then { name -> Res1(name) }
+          .then { (first, last) -> Res2(first, last) }
       )
 
-    assertEquals(result, Res1(Name("Joe", "Bloggs")))
+    assertEquals(result, Res2("Joe", "Bloggs"))
   }
 
   @Test
@@ -32,10 +32,10 @@ class PersonDslTest: DecomatTest {
         case(Person[Name[Is(), Is {it == "Roggs"}]])
           .then { name -> wrongAnswer },
         case(Person[Name[Is {it == "Joe"}, Is {it == "Bloggs"}]])
-          .then { name -> Res1(name) }
+          .then { (first, last) -> Res2(first, last) }
       )
 
-    assertEquals(result, Res1(Name("Joe", "Bloggs")))
+    assertEquals(result, Res2("Joe", "Bloggs"))
   }
 
   @Test
@@ -46,10 +46,10 @@ class PersonDslTest: DecomatTest {
         case(Person[Name[isOneOf("Bill", "Will"), Is()]])
           .then { name -> wrongAnswer },
         case(Person[Name[isOneOf("Joe", "Jack"), Is()]])
-          .then { name -> Res1(name) }
+          .then { (first, last) -> Res2(first, last) }
       )
 
-    assertEquals(result, Res1(Name("Joe", "Bloggs")))
+    assertEquals(result, Res2("Joe", "Bloggs"))
   }
 
   @Test
