@@ -5,20 +5,20 @@ import io.decomat.fail.*
 inline fun <P1 : Pattern<R1>, R1, reified R> customPattern1(
   nested1: P1,
   noinline matchName: (R) -> Components1<R1>?
-) = CustomPattern1(nested1, matchName, Typed<R>())
+): Pattern1<P1, R1, R> = CustomPattern1(nested1, matchName, Typed<R>())
 
 inline fun <P1 : Pattern<R1>, P2 : Pattern<R2>, R1, R2, reified R> customPattern2(
   nested1: P1,
   nested2: P2,
   noinline matchName: (R) -> Components2<R1, R2>?
-) = CustomPattern2(nested1, nested2, matchName, Typed<R>())
+): Pattern2<P1, P2, R1, R2, R> = CustomPattern2(nested1, nested2, matchName, Typed<R>())
 
 inline fun <P1 : Pattern<R1>, P2 : Pattern<R2>, P3 : Pattern<R3>, R1, R2, R3, reified R> customPattern3(
   nested1: P1,
   nested2: P2,
   nested3: P3,
   noinline matchName: (R) -> Components3<R1, R2, R3>?
-) = CustomPattern3(nested1, nested2, nested3, matchName, Typed<R>())
+): Pattern3<P1, P2, P3, R1, R2, R3, R> = CustomPattern3(nested1, nested2, nested3, matchName, Typed<R>())
 
 class CustomPattern1<P1 : Pattern<R1>, R1, R>(
   val innerMatch: P1,

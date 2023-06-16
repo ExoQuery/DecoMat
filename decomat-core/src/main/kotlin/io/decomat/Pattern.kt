@@ -10,10 +10,6 @@ sealed interface Pattern<R> {
   fun matchesAny(comps: Any): Boolean =
     when(comps) {
       is ProductClass<*> -> {
-        if (isType(comps.value, typeR.type) && !matches(comps as ProductClass<R>)) {
-          val m = matches(comps as ProductClass<R>)
-          println("stop here!")
-        }
         isType(comps.value, typeR.type) && matches(comps as ProductClass<R>)
       }
       else -> {
