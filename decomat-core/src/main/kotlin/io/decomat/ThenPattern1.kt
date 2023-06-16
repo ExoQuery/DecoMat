@@ -6,10 +6,15 @@ class Then0<P1: Pattern0<R1>, R1, R>(
   override val pat: Pattern1<P1, R1, R>,
   override val check: (R) -> Boolean
 ): Stage<Pattern1<P1, R1, R>, R> {
-  inline fun thenIf(crossinline f: (R) -> Boolean) = Then0(pat) { r: R -> f(r) }
-  inline fun thenIfThis(crossinline f: R.() -> (R) -> Boolean) = Then0(pat) { r: R -> f(r)(r) }
-  inline fun <O> then(crossinline f: (R) -> O): Case<O, R> = StageCase(pat, check) { r: R -> f(r) }
-  inline fun <O> thenThis(crossinline f: R.() -> O): Case<O, R> = StageCase(pat, check) { r: R -> r.f() }
+  inline fun <O> useComponents(r: R, f: (Components1<R1>) -> O): O {
+    val (r1) = pat.divideIntoComponentsAny(r as Any)
+    return f(Components1(r1))
+  }
+
+  inline fun thenIf(crossinline f: (Components1<R1>) -> Boolean) = Then0(pat) { r: R -> useComponents(r, f) }
+  inline fun thenIfThis(crossinline f: R.() -> (Components1<R1>) -> Boolean) = Then0(pat) { r: R -> useComponents(r, f(r)) }
+  inline fun <O> then(crossinline f: (Components1<R1>) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f) }
+  inline fun <O> thenThis(crossinline f: R.() -> (Components1<R1>) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f(r)) }
 }
 
 fun <P1: Pattern1<P11, R11, R1>, P11: Pattern<R11>, R11, R1, R> case(pat: Pattern1<P1, R1, R>) = Then1(pat, {true})

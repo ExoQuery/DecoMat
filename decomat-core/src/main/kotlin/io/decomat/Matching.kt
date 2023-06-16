@@ -16,8 +16,14 @@ fun <M> on(value: M): DoMatch<M> = DoMatch(value)
 
 // TODO Have an else-clause
 class DoMatch<in R>(private val value: R) {
-  fun <O> match(vararg cases: Case<O, R>): O? =
-    cases.find { theCase -> theCase.matches(value) }?.eval(value)
+  /** Don't want to be strict about what types the case-has (i.e. R) since
+   * if they don't match the 1st part `theCase.matches` will just return `false` and
+   * evaluation will not proceed. Also, this is needed when we want to do
+   * contravariant matches (i.e. the thing we're matching-on is more general
+   * then the thing we are trying to match it to).
+   */
+  fun <O> match(vararg cases: Case<O, Any>): O? =
+    cases.find { theCase -> theCase.matches(value as Any) }?.eval(value as Any)
 
 //  fun <O> matchAny(vararg cases: Case<O, R>): O? =
 //    cases.find { theCase -> theCase.matches(value as Any) }?.eval(value as Any)
