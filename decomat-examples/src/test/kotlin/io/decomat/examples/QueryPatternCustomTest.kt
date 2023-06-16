@@ -14,7 +14,7 @@ class QueryPatternCustomTest {
   fun flatMapCustomm() {
     val fm = FlatMap(Entity(123), "id", Entity("foo"))
     val out =
-      on(fm as Query<*>).match(
+      on(fm as Query<*>).match( //
         case(FlatMapM[EntityM[Is(123)], Is<Entity<String>>()]).then { (str), query -> Pair(str, query) }
       )
     assertEquals(out, Pair(123, Entity("foo")))

@@ -110,13 +110,12 @@ class Then${i1}${i2}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R>(
   override val check: (R) -> Boolean
 ): Stage<[@Pattern 2 /], R> {
 
-  inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], [@Components 2 i2 /]) -> O): O =
-    (r as? ProductClass<*>)?.let {
-      val (r1, r2) = pat.divideIntoComponentsAny(it)
-      [#if i1 != 0]val [@vars 1 i1 /] = pat.pattern1.divideIntoComponentsAny(r1 as Any)[#else]//skip[/#if]
-      [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.divideIntoComponentsAny(r2 as Any)[#else]//skip[/#if]
-      f([@compVars2 i1, i2 /])
-    } ?: notRightCls(r)
+  inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], [@Components 2 i2 /]) -> O): O {
+    val (r1, r2) = pat.divideIntoComponentsAny(r as Any)
+    [#if i1 != 0]val [@vars 1 i1 /] = pat.pattern1.divideIntoComponentsAny(r1 as Any)[#else]//skip[/#if]
+    [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.divideIntoComponentsAny(r2 as Any)[#else]//skip[/#if]
+    return f([@compVars2 i1, i2 /])
+  }
 
   inline fun <O> then(crossinline f: ([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
     StageCase(pat, check) { value -> useComponents(value, f) }
