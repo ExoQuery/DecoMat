@@ -1,5 +1,23 @@
 package io.decomat
 
+fun <R> case(pat: Pattern0<R>) = ThenIs(pat, {true})
+
+class ThenIs<R>(
+  override val pat: Pattern0<R>,
+  override val check: (R) -> Boolean
+): Stage<Pattern0<R>, R> {
+  inline fun <O> useComponents(r: R, f: (R) -> O): O {
+    return f(r)
+  }
+
+  inline fun thenIf(crossinline f: (R) -> Boolean) = ThenIs(pat) { r: R -> useComponents(r, f) }
+  inline fun thenIfThis(crossinline f: R.() -> (R) -> Boolean) = ThenIs(pat) { r: R -> useComponents(r, f(r)) }
+  inline fun <O> then(crossinline f: (R) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f) }
+  inline fun <O> thenThis(crossinline f: R.() -> (R) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f(r)) }
+}
+
+
+
 fun <P1: Pattern0<R1>, R1, R> case(pat: Pattern1<P1, R1, R>) = Then0(pat, {true})
 
 class Then0<P1: Pattern0<R1>, R1, R>(

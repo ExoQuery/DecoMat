@@ -5,9 +5,39 @@ import kotlin.test.Test
 public class ThenTest: DecomatTest {
   // Just check that the types don't fail
   @Test
+  fun `ThenIs - Is`() =
+    assert(
+      case(Is<Entity>()).then { a -> Res1(a) }.eval(foo) == Res1(foo)
+    )
+
+  @Test
   fun typesTest() {
     case(FlatMap_M(Is(), Is())).then { a: Query, b: Query -> Res2(a, b) }
   }
+
+  @Test
+  fun `Then0 - distinct(Is) - Filter`() =
+    assert(
+      case(Distinct_M(Is<Entity>())).then { (a) -> Res1(a) }.eval(Distinct(foo)) == Res1(foo)
+    )
+
+  @Test
+  fun `Then0 - distinct(Is)`() =
+    assert(
+      case(Distinct_M(Is<Entity>())).then { (a) -> Res1(a) }.eval(Distinct(foo)) == Res1(foo)
+    )
+
+  @Test
+  fun `Then1 - distinct(distinct(Is))`() =
+    assert(
+      case(Distinct_M(Distinct_M(Is<Entity>()))).then { (a) -> Res1(a) }.eval(Distinct(Distinct(foo))) == Res1(foo)
+    )
+
+  @Test
+  fun `Then2 - distinct(flatMap(Is, Is))`() =
+    assert(
+      case(Distinct_M(FlatMap_M(Is(), Is()))).then { (a, b) -> Res2(a, b) }.eval(Distinct(FlatMap(foo, bar))) == Res2(foo, bar)
+    )
 
   @Test
   fun `Then00 - flatMap(Is, Is) - Filter`() =

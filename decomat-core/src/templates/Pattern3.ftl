@@ -99,8 +99,8 @@
 [@output file="decomat-core/build/templates/io/decomat/Then2.kt"]
 package io.decomat
 
-[#list 0..3 as i1]
-  [#list 0..3 as i2]
+[#list 0..2 as i1]
+  [#list 0..2 as i2]
 [#-- fun <P1: Pattern1<P11, R11, R1>, P2: Pattern0<R2>, P11: Pattern<R11>, R11, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = Then10(pat, {true}) --]
 
 fun <P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R> case(pat: [@Pattern 2 /]) = Then${i1}${i2}(pat, {true})
