@@ -151,7 +151,7 @@ subprojects {
   }
 
   // Check the 'skipSigning' project property
-  if (!project.hasProperty("skipSigning")) {
+  if (!project.hasProperty("nosign")) {
     // If 'skipSigning' is not present, apply the signing plugin and configure it
     apply(plugin = "signing")
 
