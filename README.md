@@ -232,11 +232,11 @@ data class Customer(val something: String, @Component val name: Name, @Component
 
 on(something).match(
   case( Customer[Name[Is(), Is()], Partner(Is())] )
-    .thenThis {{ first, last, id ->
+    .thenThis { first, last, id ->
       // You can use the `this` keyword to refer to the `Customer` instance (also `this` can be omitted entirely).
       // (the components first, last, id are also available here for convenience)
       this.something + this.somethingElse
-    }}
+    }
   // Other cases...
 )
 ```

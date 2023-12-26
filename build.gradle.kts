@@ -21,7 +21,7 @@ apply(plugin = "io.github.gradle-nexus.publish-plugin")
 allprojects {
 
   group = "io.exoquery"
-  version = "0.0.2"
+  version = "0.0.3"
 
   apply(plugin = "kotlin")
   apply(plugin = "maven-publish")
@@ -151,7 +151,7 @@ subprojects {
   }
 
   // Check the 'skipSigning' project property
-  if (!project.hasProperty("skipSigning")) {
+  if (!project.hasProperty("nosign")) {
     // If 'skipSigning' is not present, apply the signing plugin and configure it
     apply(plugin = "signing")
 

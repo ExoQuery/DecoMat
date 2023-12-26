@@ -1,7 +1,6 @@
 [#ftl]
 
 
-
 [#macro Pattern num]
   [@compress single_line=true]
   [#if num == 0]Pattern0<R>
@@ -96,11 +95,13 @@
   [/@compress]
 [/#macro]
 
+
+
 [@output file="decomat-core/build/templates/io/decomat/Then2.kt"]
 package io.decomat
 
-[#list 0..3 as i1]
-  [#list 0..3 as i2]
+[#list 0..2 as i1]
+  [#list 0..2 as i2]
 [#-- fun <P1: Pattern1<P11, R11, R1>, P2: Pattern0<R2>, P11: Pattern<R11>, R11, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = Then10(pat, {true}) --]
 
 fun <P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R> case(pat: [@Pattern 2 /]) = Then${i1}${i2}(pat, {true})
@@ -116,12 +117,17 @@ class Then${i1}${i2}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R>(
     [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.divideIntoComponentsAny(r2 as Any)[#else]//skip[/#if]
     return f([@compVars2 i1, i2 /])
   }
+  inline fun thenIf(crossinline f: ([@Components 1 i1 /], [@Components 2 i2 /]) -> Boolean) =
+    Then${i1}${i2}(pat) { v -> useComponents(v, { c1, c2 -> f(c1, c2) }) }
+
+  inline fun thenIfThis(crossinline f: R.([@Components 1 i1 /], [@Components 2 i2 /]) -> Boolean) =
+    Then${i1}${i2}(pat) { v -> useComponents(v, { c1, c2 -> f(v, c1, c2) }) }
 
   inline fun <O> then(crossinline f: ([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
-    StageCase(pat, check) { value -> useComponents(value, f) }
+    StageCase(pat, check) { v -> useComponents(v, { c1, c2 -> f(c1, c2) }) }
 
-  inline fun <O> thenThis(crossinline f: R.() -> ([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
-    StageCase(pat, check) { v -> useComponents(v, f(v)) }
+  inline fun <O> thenThis(crossinline f: R.([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
+    StageCase(pat, check) { v -> useComponents(v, { c1, c2 -> f(v, c1, c2) }) }
 }
   [/#list]
 [/#list]

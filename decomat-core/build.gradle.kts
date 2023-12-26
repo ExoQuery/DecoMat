@@ -36,6 +36,12 @@ tasks.register<TemplateTask>("template_base", TemplateTask::class) {
     into("build/templates/io/decomat")
 }
 
+//tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+//    kotlinOptions{
+//        freeCompilerArgs = listOf("-Xno-optimize")
+//    }
+//}
+
 //tasks.register("template", Sync::class) {
 //    dependsOn("template_base")
 //    from("build/templates/io/decomat")

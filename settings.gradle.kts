@@ -1,7 +1,7 @@
 pluginManagement {
   plugins {
-    id("com.google.devtools.ksp") version "1.8.20-1.0.11"
-    kotlin("jvm") version "1.8.20"
+    id("com.google.devtools.ksp") version "2.0.0-Beta2-1.0.16"
+    kotlin("jvm") version "2.0.0-Beta2"
     id("dev.anies.gradle.template") version "0.0.2"
   }
   repositories {
