@@ -11,9 +11,9 @@ class ThenIs<R>(
   }
 
   inline fun thenIf(crossinline f: (R) -> Boolean) = ThenIs(pat) { r: R -> useComponents(r, f) }
-  inline fun thenIfThis(crossinline f: R.() -> (R) -> Boolean) = ThenIs(pat) { r: R -> useComponents(r, f(r)) }
+  inline fun thenIfThis(crossinline f: R.(R) -> Boolean) = ThenIs(pat) { r: R -> useComponents(r, { c -> f(r, c) }) }
   inline fun <O> then(crossinline f: (R) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f) }
-  inline fun <O> thenThis(crossinline f: R.() -> (R) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f(r)) }
+  inline fun <O> thenThis(crossinline f: R.(R) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, { c -> f(r, c) }) }
 }
 
 
@@ -24,15 +24,15 @@ class Then0<P1: Pattern0<R1>, R1, R>(
   override val pat: Pattern1<P1, R1, R>,
   override val check: (R) -> Boolean
 ): Stage<Pattern1<P1, R1, R>, R> {
-  inline fun <O> useComponents(r: R, f: (Components1<R1>) -> O): O {
+  inline fun <O> useComponents(r: R, f: (R1) -> O): O {
     val (r1) = pat.divideIntoComponentsAny(r as Any)
-    return f(Components1(r1))
+    return f(r1)
   }
 
-  inline fun thenIf(crossinline f: (Components1<R1>) -> Boolean) = Then0(pat) { r: R -> useComponents(r, f) }
-  inline fun thenIfThis(crossinline f: R.() -> (Components1<R1>) -> Boolean) = Then0(pat) { r: R -> useComponents(r, f(r)) }
-  inline fun <O> then(crossinline f: (Components1<R1>) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f) }
-  inline fun <O> thenThis(crossinline f: R.() -> (Components1<R1>) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f(r)) }
+  inline fun thenIf(crossinline f: (R1) -> Boolean) = Then0(pat) { r: R -> useComponents(r, f) }
+  inline fun thenIfThis(crossinline f: R.(R1) -> Boolean) = Then0(pat) { r: R -> useComponents(r, { c -> f(r, c) }) }
+  inline fun <O> then(crossinline f: (R1) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, f) }
+  inline fun <O> thenThis(crossinline f: R.(R1) -> O): Case<O, R> = StageCase(pat, check) { r: R -> useComponents(r, { c -> f(r, c) }) }
 }
 
 fun <P1: Pattern1<P11, R11, R1>, P11: Pattern<R11>, R11, R1, R> case(pat: Pattern1<P1, R1, R>) = Then1(pat, {true})
@@ -48,9 +48,9 @@ class Then1<P1: Pattern1<P11, R11, R1>, P11: Pattern<R11>, R11, R1, R>(
   }
 
   inline fun thenIf(crossinline f: (Components1<R11>) -> Boolean) = Then1(pat) { r: R -> useComponents(r, f) }
-  inline fun thenIfThis(crossinline f: R.() -> (Components1<R11>) -> Boolean) = Then1(pat) { r: R -> useComponents(r, f(r)) }
+  inline fun thenIfThis(crossinline f: R.(Components1<R11>) -> Boolean) = Then1(pat) { r: R -> useComponents(r, { c -> f(r, c) }) }
   inline fun <O> then(crossinline f: (Components1<R11>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f) }
-  inline fun <O> thenThis(crossinline f: R.() -> (Components1<R11>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f(r)) }
+  inline fun <O> thenThis(crossinline f: R.(Components1<R11>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { c -> f(r, c) }) }
 }
 
 /** Generic match for Pattern2<PatternA, PatternB> where we don't know what A and B are */
@@ -69,9 +69,9 @@ class Then2<P1: Pattern2<P11, P12, R11, R12, R1>, P11: Pattern<R11>, R11, P12: P
   }
 
   inline fun thenIf(crossinline f: (Components2<R11, R12>) -> Boolean) = Then2(pat) { r: R -> useComponents(r, f) }
-  inline fun thenIfThis(crossinline f: R.() -> (Components2<R11, R12>) -> Boolean) = Then2(pat) { r: R -> useComponents(r, f(r)) }
+  inline fun thenIfThis(crossinline f: R.(Components2<R11, R12>) -> Boolean) = Then2(pat) { r: R -> useComponents(r, { c -> f(r, c) }) }
   inline fun <O> then(crossinline f: (Components2<R11, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f) }
-  inline fun <O> thenThis(crossinline f: R.() -> (Components2<R11, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f(r)) }
+  inline fun <O> thenThis(crossinline f: R.(Components2<R11, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { c -> f(r, c) }) }
 }
 
 //fun <P: Pattern2<P1, P2, R1, R2, R>, P1: Pattern<R1>, P2: Pattern<R2>, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = GenericThen2X(pat, {true})

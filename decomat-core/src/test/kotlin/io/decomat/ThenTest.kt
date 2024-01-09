@@ -1,6 +1,8 @@
 package io.decomat
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 public class ThenTest: DecomatTest {
   // Just check that the types don't fail
@@ -17,14 +19,14 @@ public class ThenTest: DecomatTest {
 
   @Test
   fun `Then0 - distinct(Is) - Filter`() =
-    assert(
-      case(Distinct_M(Is<Entity>())).then { (a) -> Res1(a) }.eval(Distinct(foo)) == Res1(foo)
+    assertEquals<Res1<Entity>>(
+      case(Distinct_M(Is<Entity>())).then { a -> Res1(a) }.eval(Distinct(foo)),  Res1(foo)
     )
 
   @Test
   fun `Then0 - distinct(Is)`() =
-    assert(
-      case(Distinct_M(Is<Entity>())).then { (a) -> Res1(a) }.eval(Distinct(foo)) == Res1(foo)
+    assertEquals(
+      case(Distinct_M(Is<Entity>())).then { a -> Res1(a) }.eval(Distinct(foo)), Res1(foo)
     )
 
   @Test
@@ -48,13 +50,43 @@ public class ThenTest: DecomatTest {
   @Test
   fun `Then00 - flatMap(Is, Is) - thenThis`() =
     assert(
-      case(FlatMap_M(Is(), Is())).thenThis {{ a, b -> Res3(a, b, body) }}.eval(FlatMap(foo, bar)) == Res3(foo, bar, bar)
+      case(FlatMap_M(Is(), Is())).thenThis { a, b -> Res3(a, b, body) }.eval(FlatMap(foo, bar)) == Res3(foo, bar, bar)
     )
 
   @Test
   fun `Then00 - flatMap(Is, Is)`() =
     assert(
       case(FlatMap_M(Is(), Is())).then { a, b -> Res2(a, b) }.eval(FlatMap(foo, bar)) == Res2(foo, bar)
+    )
+
+  @Test
+  fun `Then00-thenIf - flatMap(Is, Is)`() =
+    assert(
+      case(FlatMap_M(Is(), Is())).thenIf { a, b -> a == foo && b == bar }.then { a, b -> Res2(a, b) }.eval(FlatMap(foo, bar)) == Res2(foo, bar)
+    )
+
+  @Test
+  fun `Then00-!thenIf - flatMap(Is, Is)`() =
+    assert(
+      case(FlatMap_M(Is(), Is())).thenIf { a, b -> a != foo || b != bar }.then { a, b -> Res2(a, b) }.evalSafe(FlatMap(foo, bar)) == null
+    )
+
+  @Test
+  fun `Then00-thenIfThis - flatMap(Is, Is)`() =
+    assertEquals<Res2<Query, Query>>(
+      case(FlatMap_M(Is(), Is())).thenIfThis { a, b ->
+        a == foo && b == bar && this.head == foo && this.body == bar
+      }.then { a, b -> Res2(a, b) }.eval(FlatMap(foo, bar)),
+      // ==
+      Res2(foo, bar)
+    )
+
+  @Test
+  fun `Then00-!thenIfThis - flatMap(Is, Is)`() =
+    assertNull(
+      case(FlatMap_M(Is(), Is())).thenIfThis { a, b ->
+        a != foo || b != bar || this.head != foo || this.body != bar
+      }.then { a, b -> Res2(a, b) }.evalSafe(FlatMap(foo, bar))
     )
 
   @Test
@@ -104,6 +136,4 @@ public class ThenTest: DecomatTest {
     assert(
       case(FlatMap_M(Map_M(Is(), Is()), Map_M(Is(), Is()))).then { (a1, a2), (b1, b2) -> Res4(a1, a2, b1, b2) }.eval(FlatMap(Map(foo, bar), Map(baz, waz))) == Res4(foo, bar, baz, waz)
     )
-
-  // TODO Need test for Then31-33 and Then000-Then333
 }
