@@ -9,6 +9,7 @@ import kotlin.test.assertEquals
  * Very important to test situation with custom AST types where no ProductClass
  * for the AST type actually exists.
  */
+@Suppress("NAME_SHADOWING")
 class QueryPatternCustomTest {
   @Test
   fun flatMapCustomm() {
@@ -27,11 +28,11 @@ class QueryPatternCustomTest {
     val out =
       on(ent as Query<*>).match(
         case(NestedM[NestedM[Is<Entity<*>>()]])
-          .then { (ent) -> wrongResult },
+          .then { ent -> wrongResult },
         case(NestedM[Is<Entity<*>>()])
-          .then { (ent) -> ent } //
+          .then { ent -> ent } //
       )
-    assertEquals(out, Entity(123))
+    assertEquals(Entity(123), out)
   }
 
   @Test

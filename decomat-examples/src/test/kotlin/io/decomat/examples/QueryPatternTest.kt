@@ -5,6 +5,7 @@ import io.decomat.examples.querydsl.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@Suppress("NAME_SHADOWING")
 class QueryPatternTest {
   @Test
   fun flatMapRegular() {
@@ -33,11 +34,11 @@ class QueryPatternTest {
     val out =
       on(ent as Query<*>).match(
         case(NestedM[NestedM[Is<Entity<*>>()]])
-          .then { (ent) -> wrongResult },
+          .then { ent -> wrongResult },
         case(Nested[Is<Entity<*>>()])
-          .then { (ent) -> ent } //
+          .then { ent -> ent }
       )
-    assertEquals(out, Entity(123))
+    assertEquals(Entity(123), out)
   }
 
   @Test
