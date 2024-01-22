@@ -6,6 +6,13 @@ import com.google.devtools.ksp.processing.SymbolProcessorProvider
 
 class DecomatProvider : SymbolProcessorProvider {
   override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-    return DecomatProcessor(environment.logger, environment.codeGenerator)
+    val matchableAnnotationName =
+      environment.options.get("matchableName") ?: "Matchable"
+    val componentAnnotationName =
+      environment.options.get("componentName") ?: "Component"
+    return DecomatProcessor(
+      environment.logger, environment.codeGenerator,
+      matchableAnnotationName, componentAnnotationName
+    )
   }
 }

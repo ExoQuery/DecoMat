@@ -450,3 +450,32 @@ This is done so that the `Map` case can match any `Query` type, otherwise the ma
 (E.g. it would be difficult to deduce the type of the `head` and `body` elements causing the generated code to be incorrect)
 
 If you want to experiment with fully-typed ADT-components nonetheless, use `@Matchable(simplifyTypes = false)`.
+
+## Changing the Annotation Name
+
+Kotlin allows changing an import name using the `import ... as ...` syntax. This can be used to change the
+`@Matchable` annotation name to something else, however due to issue [#783](https://github.com/google/ksp/issues/783) it is not possible to genenerically
+detect this change inside of a KSP processor. Therefore, if you change the annotation name, you must also
+add the following setting to your `build.gradle.kts` file:
+```kotlin
+// build.gradle.kts
+ksp {
+    arg("matchableName", "Mat")
+    arg("componentName", "Slot")
+}
+```
+Then rename the `@Matchable` annotation to `@Mat` and the `@Component` annotation to `@Slot`
+in the import:
+```kotlin
+import io.decomat.Matchable as Mat
+import io.decomat.Component as Slot
+
+// Then use the annotations as follows:
+@Mat
+data class Person(@Slot val firstName: String, @Slot val lastName: String) {
+  override val productComponents = productComponentsOf(this, firstName, lastName)
+  companion object {}
+}
+```
+
+

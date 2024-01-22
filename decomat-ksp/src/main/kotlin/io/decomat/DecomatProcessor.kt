@@ -12,7 +12,9 @@ import java.awt.Component
 
 class DecomatProcessor(
   private val logger: KSPLogger,
-  val codeGenerator: CodeGenerator
+  val codeGenerator: CodeGenerator,
+  val matchableAnnotationName: String,
+  val componentAnnotationName: String
 ) : SymbolProcessor {
 
   override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -23,19 +25,19 @@ class DecomatProcessor(
           when {
             sym is KSClassDeclaration && sym.classKind == ClassKind.CLASS -> {
               val useStarProjection =
-                sym.annotations.find { it.shortName.getShortName() == "Matchable" }?.arguments?.get(0)?.value as? Boolean ?: true
+                sym.annotations.find { it.shortName.getShortName() == matchableAnnotationName }?.arguments?.get(0)?.value as? Boolean ?: true
 
               // TODO also allow annotation on values in body (maybe even methods?)
               val componentElements =
                 sym.primaryConstructor?.parameters?.filter {
                   val isVal = it.isVal
                   if (!isVal) logger.error("Cannot introspect the parameter. Only val-parameters are allowed.", it)
-                  val hasAnnotation = it.annotations.any { annot -> annot.shortName.getShortName() == "Component" }
+                  val hasAnnotation = it.annotations.any { annot -> annot.shortName.getShortName() == componentAnnotationName }
                   isVal && hasAnnotation
                 } ?: emptyList()
 
               if (componentElements.isEmpty()) {
-                logger.error("No @Component parameters found in the primary constructor of the class $sym")
+                logger.error("No @Component parameters found in the primary constructor of the class $sym (They must be the annotation @${matchableAnnotationName})")
               }
 
               //logger.warn("Super types for: ${sym}: ${sym.superTypes.toList()}")
@@ -47,7 +49,7 @@ class DecomatProcessor(
               } == null) {
                 logger.error("""
                   The class $sym is not a subtype of io.decomat.HasProductClass or io.decomat.ProductClass.
-                  In order to be able to annotate this class with @Matchable do make it extend HasProductClass
+                  In order to be able to annotate this class with @${matchableAnnotationName} do make it extend HasProductClass
                   and add a `productComponents` product approximately like this:
                   (plus/minus any generic parameters and any subclasses you may want to add...)
                   ---
