@@ -74,6 +74,25 @@ class Then2<P1: Pattern2<P11, P12, R11, R12, R1>, P11: Pattern<R11>, R11, P12: P
   inline fun <O> thenThis(crossinline f: R.(Components2<R11, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { c -> f(r, c) }) }
 }
 
+fun <P1: Pattern2M<P11, M1, P12, R11, R12, R1>, P11: Pattern<R11>, R11, M1, P12: Pattern<R12>, R12, R1, R> case(pat: Pattern1<P1, R1, R>) = Then2M(pat, {true})
+
+class Then2M<P1: Pattern2M<P11, M1, P12, R11, R12, R1>, P11: Pattern<R11>, R11, M1, P12: Pattern<R12>, R12, R1, R>(
+  override val pat: Pattern1<P1, R1, R>,
+  override val check: (R) -> Boolean
+): Stage<Pattern1<P1, R1, R>, R> {
+  inline fun <O> useComponents(r: R, f: (Components2M<R11, M1, R12>) -> O): O {
+    val (r1) = pat.divideIntoComponentsAny(r as Any)
+    val (r11, m1, r12) = pat.pattern1.divideIntoComponentsAny(r1 as Any)
+    return f(Components2M(r11, m1, r12))
+  }
+
+  inline fun thenIf(crossinline f: (Components2M<R11, M1, R12>) -> Boolean) = Then2M(pat) { r: R -> useComponents(r, f) }
+  inline fun thenIfThis(crossinline f: R.(Components2M<R11, M1, R12>) -> Boolean) = Then2M(pat) { r: R -> useComponents(r, { c -> f(r, c) }) }
+  inline fun <O> then(crossinline f: (Components2M<R11, M1, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f) }
+  inline fun <O> thenThis(crossinline f: R.(Components2M<R11, M1, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { c -> f(r, c) }) }
+}
+
+
 //fun <P: Pattern2<P1, P2, R1, R2, R>, P1: Pattern<R1>, P2: Pattern<R2>, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = GenericThen2X(pat, {true})
 //class GenericThen2X<P: Pattern2<P1, P2, R1, R2, R>, P1: Pattern<R1>, P2: Pattern<R2>, R1, R2, R>(
 //  override val pat: Pattern2<P1, P2, R1, R2, R>,
