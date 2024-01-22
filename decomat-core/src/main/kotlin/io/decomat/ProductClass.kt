@@ -69,6 +69,10 @@ data class ProductClass2<T, A, B>(override val value: T, val a: A, val b: B): Pr
   val matchComp get(): Components2<A, B> = Components2(a, b)
 }
 
+data class ProductClass2M<T, A, M, B>(override val value: T, val a: A, val m: M, val b: B): ProductClass<T> {
+  val matchComp get(): Components2M<A, M, B> = Components2M(a, m, b)
+}
+
 // For example: data class FlatMap(head: Query, body: Query) extends Comp3<FlatMap, Query, Query>
 data class ProductClass3<T, A, B, C>(override val value: T, val a: A, val b: B, val c: C): ProductClass<T>
 
@@ -81,4 +85,7 @@ sealed interface Components
 data class Components1<in A>(val a: @UnsafeVariance A): Components
 // For example: data class FlatMap(head: Query, body: Query) extends Comp2<Query, Query>
 data class Components2<in A, in B>(val a: @UnsafeVariance A, val b: @UnsafeVariance B): Components
+
+data class Components2M<in A, in M, in B>(val a: @UnsafeVariance A, val m: @UnsafeVariance M, val b: @UnsafeVariance B): Components
+
 data class Components3<in A, in B, in C>(val a: @UnsafeVariance A, val b: @UnsafeVariance B, val c: @UnsafeVariance C): Components
