@@ -7,7 +7,7 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
-sealed interface ProductClass<T> {
+sealed interface ProductClass<out T> {
   val value: T
   fun isIfHas() =
     when(val thisComp = this) {

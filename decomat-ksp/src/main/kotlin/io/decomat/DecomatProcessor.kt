@@ -145,7 +145,7 @@ class DecomatProcessor(
         "io.decomat.Pattern",
         "io.decomat.Pattern1",
         "io.decomat.Pattern2",
-        "io.decomat.Pattern3",
+        "io.decomat.Pattern2M",
         "io.decomat.Typed",
         "io.decomat.Is"
       )

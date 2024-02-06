@@ -12,6 +12,12 @@ data class Person(@Component val name: Name, @Component val age: Int): HasProduc
   companion object {}
 }
 
+@Matchable
+data class Person1(@Component val name: Name): HasProductClass<Person1> {
+  override val productComponents = productComponentsOf(this, name)
+  companion object {}
+}
+
 
 object FirstName2 {
   operator fun get(nameString: Pattern0<String>) =

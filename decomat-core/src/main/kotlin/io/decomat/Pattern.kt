@@ -3,9 +3,16 @@ package io.decomat
 import io.decomat.fail.fail
 import io.decomat.fail.failToDivide
 
-sealed interface Pattern<R> {
-  val typeR: Typed<R>
-  fun matches(comps: ProductClass<R>): Boolean
+/**
+ * Note that all the patterns need to be covariant, otherwise something like this:
+ * `Pattern1<Pattern1<Pattern<X>, R1>, R>` won't be a subtype of something like:
+ * `Pattern1<Pattern1<Pattern0<String>, Name>, Person>` because Pattern0<String>
+ *  won't be unified with `Pattern<X>`. Therefore all inner-patterns need
+ *  to be covariant.
+ */
+sealed interface Pattern<out R> {
+  val typeR: Typed<out R>
+  fun matches(comps: ProductClass<@UnsafeVariance R>): Boolean
   @Suppress("UNCHECKED_CAST")
   fun matchesAny(comps: Any): Boolean =
     when(comps) {
@@ -22,12 +29,12 @@ sealed interface Pattern<R> {
 
 
 // TODO write a custom function with Pattern etc... that is equivalen of `unapply`. They need to be open classes
-abstract class Pattern0<R>(override val typeR: Typed<R>): Pattern<R> {
+abstract class Pattern0<out R>(override val typeR: Typed<@UnsafeVariance R>): Pattern<R> {
   // `matches` function is delegated to implementors e.g. `Any`
 }
 
-abstract class Pattern1<P1: Pattern<R1>, R1, R>(val pattern1: P1, override val typeR: Typed<R>): Pattern<R> {
-  override fun matches(comps: ProductClass<R>) =
+abstract class Pattern1<out P1: Pattern<R1>, out R1, out R>(val pattern1: P1, override val typeR: Typed<@UnsafeVariance R>): Pattern<R> {
+  override fun matches(comps: ProductClass<@UnsafeVariance R>) =
   // E.g. for Distinct.M(...): Pattern1<...> check that the thing we are trying to match as `Distinct`
     // is actually a `Distinct` instances
     comps.value.isType(typeR)
@@ -38,7 +45,7 @@ abstract class Pattern1<P1: Pattern<R1>, R1, R>(val pattern1: P1, override val t
         else -> false
       }
 
-  open fun divideIntoComponentsAny(instance: kotlin.Any): Components1<R1> =
+  open fun divideIntoComponentsAny(instance: kotlin.Any): Components1<@UnsafeVariance R1> =
     when(instance) {
       is HasProductClass<*> ->
         divideIntoComponentsAny(instance.productComponents)
@@ -52,7 +59,7 @@ abstract class Pattern1<P1: Pattern<R1>, R1, R>(val pattern1: P1, override val t
       else -> failToDivide(instance)
     }
 
-  open fun divideIntoComponents(instance: ProductClass<R>): Components1<R1> =
+  open fun divideIntoComponents(instance: ProductClass<@UnsafeVariance R>): Components1<@UnsafeVariance R1> =
     when(val inst = instance.isIfHas()) {
       is ProductClass1<*, *> -> Components1(inst.a as R1)
       else -> fail("must match properly") // todo refine message

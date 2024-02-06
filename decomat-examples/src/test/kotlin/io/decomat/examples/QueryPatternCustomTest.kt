@@ -25,6 +25,9 @@ class QueryPatternCustomTest {
   fun singleNestedRegular() {
     val ent = Nested(Entity(123))
     val wrongResult = Entity("wrong-result")
+
+    val r = NestedM.get(NestedM[Is<Entity<*>>()])
+
     val out =
       on(ent as Query<*>).match(
         case(NestedM[NestedM[Is<Entity<*>>()]])
