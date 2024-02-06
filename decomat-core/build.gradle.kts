@@ -30,6 +30,12 @@ plugins {
 
 sourceSets["main"].kotlin.srcDir(file("build/templates"))
 
+/*
+Note that the error "could not list directory ...git/DecoMat/decomat-core/src/templates
+is actually misleading. The actual error will be something else in the freemarker template
+but for some reason a higher level task can't list the directory of the ftl building fails.
+In order to get the real error add --stacktrace to the './gradlew runFreemarkerTemplate' task
+ */
 tasks.register<TemplateTask>("template_base", TemplateTask::class) {
     data = mutableMapOf("key" to "value")
     from("src/templates/")

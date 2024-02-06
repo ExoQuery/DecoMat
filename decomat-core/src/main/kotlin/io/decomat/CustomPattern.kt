@@ -13,13 +13,6 @@ inline fun <P1 : Pattern<R1>, P2 : Pattern<R2>, R1, R2, reified R> customPattern
   noinline matchName: (R) -> Components2<R1, R2>?
 ): Pattern2<P1, P2, R1, R2, R> = CustomPattern2(nested1, nested2, matchName, Typed<R>())
 
-inline fun <P1 : Pattern<R1>, P2 : Pattern<R2>, P3 : Pattern<R3>, R1, R2, R3, reified R> customPattern3(
-  nested1: P1,
-  nested2: P2,
-  nested3: P3,
-  noinline matchName: (R) -> Components3<R1, R2, R3>?
-): Pattern3<P1, P2, P3, R1, R2, R3, R> = CustomPattern3(nested1, nested2, nested3, matchName, Typed<R>())
-
 class CustomPattern1<P1 : Pattern<R1>, R1, R>(
   val innerMatch: P1,
   val match: (R) -> Components1<R1>?,
@@ -66,27 +59,28 @@ class CustomPattern2<P1 : Pattern<R1>, P2: Pattern<R2>, R1, R2, R>(
 }
 
 
-class CustomPattern3<P1 : Pattern<R1>, P2: Pattern<R2>, P3: Pattern<R3>, R1, R2, R3, R>(
+
+class CustomPattern2M<P1 : Pattern<R1>, M, P2: Pattern<R2>, R1, R2, R>(
   val innerMatchA: P1,
   val innerMatchB: P2,
-  val innerMatchC: P3,
-  val match: (R) -> Components3<R1, R2, R3>?,
+  val match: (R) -> Components2M<R1, M, R2>?,
   val tpe: Typed<R>
-): Pattern3<P1, P2, P3, R1, R2, R3, R>(innerMatchA, innerMatchB, innerMatchC, tpe) {
+): Pattern2M<P1, M, P2, R1, R2, R>(innerMatchA, innerMatchB, tpe) {
   override fun matches(comps: ProductClass<R>): Boolean =
     match(comps.value).let {
       it != null &&
         innerMatchA.matchesAny(it.a as Any) &&
-        innerMatchB.matchesAny(it.b as Any) &&
-        innerMatchC.matchesAny(it.c as Any)
+        innerMatchB.matchesAny(it.b as Any)
     }
 
-  override fun divideIntoComponents(instance: ProductClass<R>): Components3<R1, R2, R3> =
+  override fun divideInto3Components(instance: ProductClass<R>): Components2M<R1, M, R2> =
     match(instance.value) ?: failToDivide(instance)
 
-  override fun divideIntoComponentsAny(instance: kotlin.Any): Components3<R1, R2, R3> =
+  override fun divideInto3ComponentsAny(instance: kotlin.Any): Components2M<R1, M, R2> =
     if (isType(instance, tpe.type))
       match(instance as R) ?: failToDivide(instance)
     else
       failToDivide(instance)
 }
+
+

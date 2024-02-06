@@ -87,5 +87,3 @@ data class Components1<in A>(val a: @UnsafeVariance A): Components
 data class Components2<in A, in B>(val a: @UnsafeVariance A, val b: @UnsafeVariance B): Components
 
 data class Components2M<in A, in M, in B>(val a: @UnsafeVariance A, val m: @UnsafeVariance M, val b: @UnsafeVariance B): Components
-
-data class Components3<in A, in B, in C>(val a: @UnsafeVariance A, val b: @UnsafeVariance B, val c: @UnsafeVariance C): Components

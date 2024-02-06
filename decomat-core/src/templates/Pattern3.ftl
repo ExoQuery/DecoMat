@@ -1,17 +1,20 @@
 [#ftl]
 
 
+[#macro divideIntoComponentsAnyX num]
+    [@compress single_line=true]
+    [#if num == 3]divideInto3ComponentsAny
+    [#else]divideIntoComponentsAny
+    [/#if]
+    [/@compress]
+[/#macro]
+
 [#macro Pattern num]
   [@compress single_line=true]
   [#if num == 0]Pattern0<R>
   [#elseif num == 1]Pattern1<P1, R1, R>
   [#elseif num == 2]Pattern2<P1, P2, R1, R2, R>
-  [#elseif num == 3]Pattern3<P1, P2, P3, R1, R2, R3, R>
-  [#--
-  If want to add Pattern 4 etc... can just add a clause here, and then take the This____ generating part and just add one more there
-  Don't need to re-do all the macro patterns
-  [#elseif num == 4]Pattern3<P1, P2, P3, P4, R1, R2, R3, R4, R>
-   --]
+  [#elseif num == 3]Pattern2M<P1, M, P2, R1, R2, R>
   [/#if]
   [/@compress]
 [/#macro]
@@ -38,14 +41,14 @@
   [#-- R1 --]
   R${mod}
 [#elseif num == 3]
-  [#-- (P1:) Pattern3<P11, P12, P13, R11, R12, R13, R1>, --]
-  Pattern3<P${mod}1, P${mod}2, P${mod}3, R${mod}1, R${mod}2, R${mod}3, R${mod}>,
+  [#-- (P1:) Pattern2M<P11, M, P13, R11, R12, R1>, --]
+  Pattern2M<P${mod}1, M${mod}, P${mod}2, R${mod}1, R${mod}2, R${mod}>,
   [#-- P11: Pattern<R11>, R11 --]
   P${mod}1: Pattern<R${mod}1>, R${mod}1,
+  [#-- M --]
+  M${mod},
   [#-- P12: Pattern<R12>, R12 --]
   P${mod}2: Pattern<R${mod}2>, R${mod}2,
-  [#-- P13: Pattern<R13>, R13 --]
-  P${mod}3: Pattern<R${mod}3>, R${mod}3,
   [#-- R1 --]
   R${mod}
 [/#if]
@@ -58,7 +61,7 @@
   [#if num == 0]R${mod}
   [#elseif num == 1]Components1<R${mod}1>
   [#elseif num == 2]Components2<R${mod}1, R${mod}2>
-  [#elseif num == 3]Components3<R${mod}1, R${mod}2, R${mod}3>
+  [#elseif num == 3]Components2M<R${mod}1, M${mod}, R${mod}2>
   [/#if]
   [/@compress]
 [/#macro]
@@ -67,7 +70,9 @@
 [#macro vars mod max]
   [@compress single_line=true]
   [#if max == 0]r${max}
-  [#else]([#list 1..max as a]r${mod}${a}[#sep], [/#sep][/#list])
+  [#elseif max == 1 || max == 2]([#list 1..max as a]r${mod}${a}[#sep], [/#sep][/#list])
+  [#elseif max == 3](r${mod}1, m${mod}, r${mod}2)
+  [#else]
   [/#if]
   [/@compress]
 [/#macro]
@@ -78,7 +83,7 @@
   [#if num == 0]r${mod}
   [#elseif num == 1]Components1(r${mod}1)
   [#elseif num == 2]Components2(r${mod}1, r${mod}2)
-  [#elseif num == 3]Components3(r${mod}1, r${mod}2, r${mod}3)
+  [#elseif num == 3]Components2M(r${mod}1, m${mod}, r${mod}2)
   [/#if]
   [/@compress]
 [/#macro]
@@ -89,9 +94,9 @@
   [/@compress]
 [/#macro]
 
-[#macro compVars3 i1 i2 i3]
+[#macro compVars2M i1 i2]
   [@compress single_line=true]
-     [@compVar 1 i1 /], [@compVar 2 i2 /], [@compVar 3 i3 /]
+     [@compVar 1 i1 /], m, [@compVar 2 i2 /]
   [/@compress]
 [/#macro]
 
@@ -100,12 +105,14 @@
 [@output file="decomat-core/build/templates/io/decomat/Then2.kt"]
 package io.decomat
 
-[#list 0..2 as i1]
-  [#list 0..2 as i2]
+[#list 0..3 as i1]
+  [#list 0..3 as i2]
 [#-- fun <P1: Pattern1<P11, R11, R1>, P2: Pattern0<R2>, P11: Pattern<R11>, R11, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = Then10(pat, {true}) --]
 
+[#-- No 'M' variable for these because these are all based on Pattern2, a separate clause is for Pattern2M variants --]
 fun <P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R> case(pat: [@Pattern 2 /]) = Then${i1}${i2}(pat, {true})
 
+[#-- No 'M' variable for these because these are all based on Pattern2, a separate clause is for Pattern2M variants --]
 class Then${i1}${i2}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R>(
   override val pat: [@Pattern 2 /],
   override val check: (R) -> Boolean
@@ -113,8 +120,8 @@ class Then${i1}${i2}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R>(
 
   inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], [@Components 2 i2 /]) -> O): O {
     val (r1, r2) = pat.divideIntoComponentsAny(r as Any)
-    [#if i1 != 0]val [@vars 1 i1 /] = pat.pattern1.divideIntoComponentsAny(r1 as Any)[#else]//skip[/#if]
-    [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.divideIntoComponentsAny(r2 as Any)[#else]//skip[/#if]
+    [#if i1 != 0]val [@vars 1 i1 /] = pat.pattern1.[@divideIntoComponentsAnyX i1 /](r1 as Any)[#else]//skip[/#if]
+    [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.[@divideIntoComponentsAnyX i2 /](r2 as Any)[#else]//skip[/#if]
     return f([@compVars2 i1, i2 /])
   }
   inline fun thenIf(crossinline f: ([@Components 1 i1 /], [@Components 2 i2 /]) -> Boolean) =
@@ -131,41 +138,41 @@ class Then${i1}${i2}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R>(
 }
   [/#list]
 [/#list]
+
+[#-- ******************************************************************************************************* --]
+[#-- ***************************** The Variants that are Pattern2M at the base ***************************** --]
+[#-- ******************************************************************************************************* --]
+
+[#list 0..3 as i1]
+  [#list 0..3 as i2]
+
+fun <P1: [@PatternVars 1 i1 /], M, P2: [@PatternVars 2 i2 /], R> case(pat: [@Pattern 3 /]) = Then${i1}M${i2}(pat, {true})
+
+class Then${i1}M${i2}<P1: [@PatternVars 1 i1 /], M, P2: [@PatternVars 2 i2 /], R>(
+  override val pat: [@Pattern 3 /],
+  override val check: (R) -> Boolean
+): Stage<[@Pattern 3 /], R> {
+
+  inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], M, [@Components 2 i2 /]) -> O): O {
+    val (r1, m, r2) = pat.divideInto3ComponentsAny(r as Any)
+    [#if i1 != 0]val [@vars 1 i1 /] = pat.pattern1.[@divideIntoComponentsAnyX i1 /](r1 as Any)[#else]//skip[/#if]
+    [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.[@divideIntoComponentsAnyX i2 /](r2 as Any)[#else]//skip[/#if]
+    return f([@compVars2M i1, i2 /])
+  }
+  inline fun thenIf(crossinline f: ([@Components 1 i1 /], M, [@Components 2 i2 /]) -> Boolean) =
+    Then${i1}M${i2}(pat) { v -> useComponents(v, { c1, m, c2 -> f(c1, m, c2) }) }
+
+  inline fun thenIfThis(crossinline f: R.([@Components 1 i1 /], M, [@Components 2 i2 /]) -> Boolean) =
+    Then${i1}M${i2}(pat) { v -> useComponents(v, { c1, m, c2 -> f(v, c1, m, c2) }) }
+
+  inline fun <O> then(crossinline f: ([@Components 1 i1 /], M, [@Components 2 i2 /]) -> O) =
+    StageCase(pat, check) { v -> useComponents(v, { c1, m, c2 -> f(c1, m, c2) }) }
+
+  inline fun <O> thenThis(crossinline f: R.([@Components 1 i1 /], M, [@Components 2 i2 /]) -> O) =
+    StageCase(pat, check) { v -> useComponents(v, { c1, m, c2 -> f(v, c1, m, c2) }) }
+}
+  [/#list]
+[/#list]
+
+
 [/@output]
-
-
-[#--[@output file="decomat-core/build/templates/io/decomat/Then3.kt"]--]
-[#--package io.decomat--]
-
-[#--[#list 0..3 as i1]--]
-[#--  [#list 0..3 as i2]--]
-[#--    [#list 0..3 as i3]--]
-[#-- fun <P1: Pattern1<P11, R11, R1>, P2: Pattern0<R2>, P11: Pattern<R11>, R11, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = Then10(pat, {true}) --]
-
-[#--fun <P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], P3: [@PatternVars 3 i3 /], R> case(pat: [@Pattern 3 /]) = Then${i1}${i2}${i3}(pat, {true})--]
-
-[#--class Then${i1}${i2}${i3}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], P3: [@PatternVars 3 i3 /], R>(--]
-[#--  override val pat: [@Pattern 3 /],--]
-[#--  override val check: (R) -> Boolean--]
-[#--): Stage<[@Pattern 3 /], R> {--]
-
-[#--  inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O): O =--]
-[#--    (r as? ProductClass<*>)?.let {--]
-[#--      val (r1, r2, r3) = pat.divideIntoComponentsAny(it)--]
-[#--      [#if i1 != 0]val [@vars 1 i1 /] = pat.pattern1.divideIntoComponentsAny(r1 as Any)[#else]//skip[/#if]--]
-[#--      [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.divideIntoComponentsAny(r2 as Any)[#else]//skip[/#if]--]
-[#--      [#if i3 != 0]val [@vars 3 i3 /] = pat.pattern3.divideIntoComponentsAny(r3 as Any)[#else]//skip[/#if]--]
-[#--      f([@compVars3 i1, i2, i3 /])--]
-[#--    } ?: notRightCls(r)--]
-
-[#--  inline fun <O> then(crossinline f: ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O) =--]
-[#--    StageCase(pat, check) { value -> useComponents(value, f) }--]
-
-[#--  inline fun <O> thenThis(crossinline f: R.() -> ([@Components 1 i1 /], [@Components 2 i2 /], [@Components 3 i3 /]) -> O) =--]
-[#--    StageCase(pat, check) { v -> useComponents(v, f(v)) }--]
-[#--}--]
-
-[#--    [/#list]--]
-[#--  [/#list]--]
-[#--[/#list]--]
-[#--[/@output]--]

@@ -82,7 +82,7 @@ class Then2M<P1: Pattern2M<P11, M1, P12, R11, R12, R1>, P11: Pattern<R11>, R11, 
 ): Stage<Pattern1<P1, R1, R>, R> {
   inline fun <O> useComponents(r: R, f: (Components2M<R11, M1, R12>) -> O): O {
     val (r1) = pat.divideIntoComponentsAny(r as Any)
-    val (r11, m1, r12) = pat.pattern1.divideIntoComponentsAny(r1 as Any)
+    val (r11, m1, r12) = pat.pattern1.divideInto3ComponentsAny(r1 as Any)
     return f(Components2M(r11, m1, r12))
   }
 

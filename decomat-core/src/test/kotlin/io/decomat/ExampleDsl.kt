@@ -1,11 +1,10 @@
 package io.decomat
 
-// TODO how to create a custom pattern that can be used to have user-defined logic
-//      i.e. equivalent of a custom `unapply` implmentation
-
-// FlatMap(IsAny, Any<Map>).then { a, (b, c) -> ... }
-// FlatMap_M(IsAny, Map_M(IsAny, IsAny, Any<Map>)).then { a, (b, c) -> ... }
-// of Map.Any
+/*
+For some reason here I used the pattern where single letters A, B etc... are the pattern
+vars and the AP, BP are the pattern atom as opposed to the generated code where
+AP, BP are the pattern vars and A, B are the atoms
+ */
 
 sealed interface Query
 data class FlatMap(val head: Query, val body: Query): Query, HasProductClass<FlatMap> {
