@@ -20,36 +20,36 @@ class CustomPatternTest {
   }
 
 
-//  @Test
-//  fun notMatch() {
-//    val p = Person(SimpleName("John", "Doe"), 42)
-//    val out =
-//      on(p).match(
-//        case(Person[FirstName2[Is("Jack")], Is()]).then { (firstName), age -> Pair(firstName, age) }
-//      )
-//
-//    assertEquals(out, null)
-//  }
+  @Test
+  fun notMatch() {
+    val p = Person(SimpleName("John", "Doe"), 42)
+    val out =
+      on(p).match(
+        case(Person[FirstName2[Is("Jack")], Is()]).then { (firstName), age -> Pair(firstName, age) }
+      )
 
-//  @Test
-//  fun matchOne() {
-//    val p = Person(SimpleName("John", "Doe"), 42)
-//    val out1 =
-//      on(p).match(
-//        case(Person[FirstName2[Is("John")], Is()]).then { (firstName), age -> Pair(firstName, age) }
-//      )
-//    assertEquals(out1, "John" to 42)
-//  }
-//
-//  @Test
-//  fun matchOneAny() {
-//    val p = Person(SimpleName("John", "Doe"), 42)
-//    val out1 =
-//      on(p).match(
-//        case(Person[FirstName2[Is()], Is()]).then { (firstName), age -> Pair(firstName, age) }
-//      )
-//    assertEquals(out1, "John" to 42)
-//  }
+    assertEquals(out, null)
+  }
+
+  @Test
+  fun matchOne() {
+    val p = Person(SimpleName("John", "Doe"), 42)
+    val out1 =
+      on(p).match(
+        case(Person[FirstName2[Is("John")], Is()]).then { (firstName), age -> Pair(firstName, age) }
+      )
+    assertEquals(out1, "John" to 42)
+  }
+
+  @Test
+  fun matchOneAny() {
+    val p = Person(SimpleName("John", "Doe"), 42)
+    val out1 =
+      on(p).match(
+        case(Person[FirstName2[Is()], Is()]).then { (firstName), age -> Pair(firstName, age) }
+      )
+    assertEquals(out1, "John" to 42)
+  }
 
 
 
