@@ -9,12 +9,12 @@
     [/@compress]
 [/#macro]
 
-[#macro Pattern num]
+[#macro Pattern num modLeft modRight]
   [@compress single_line=true]
   [#if num == 0]Pattern0<R>
-  [#elseif num == 1]Pattern1<P1, R1, R>
-  [#elseif num == 2]Pattern2<P1, P2, R1, R2, R>
-  [#elseif num == 3]Pattern2M<P1, M, P2, R1, R2, R>
+  [#elseif num == 1]Pattern1<[@PatternHeads 1 num /], R1, R>
+  [#elseif num == 2]Pattern2<[@PatternHeads 1 modLeft /], [@PatternHeads 2 modRight /], R1, R2, R>
+  [#elseif num == 3]Pattern2M<[@PatternHeads 1 modLeft /], M, [@PatternHeads 2 modRight /], R1, R2, R>
   [/#if]
   [/@compress]
 [/#macro]
@@ -25,34 +25,35 @@
   P2: Pattern2<P21, P22, R21, R22, R2>,
    P21: Pattern<R21>, P22: Pattern<R22>, R21, R22, R2, R>(  --]
 
-
-[#macro PatternVars mod num]
+[#macro PatternHeads mod num]
 [@compress single_line=true]
-[#if num == 0]Pattern0<R${mod}>, R${mod}
+[#if num == 0]Pattern0<R${mod}>
 [#elseif num == 1]
-  Pattern1<Pattern<R${mod}1>, R${mod}1, R${mod}>, R${mod}1, R${mod}
+  Pattern1<Pattern<R${mod}1>, R${mod}1, R${mod}>
 [#elseif num == 2]
-  [#-- (P1:) Pattern2<Pattern<R11>, Pattern<R12>, R11, R12, R1>, --]
-  Pattern2<Pattern<R${mod}1>, Pattern<R${mod}2>, R${mod}1, R${mod}2, R${mod}>,
-  [#-- R11, --]
-  R${mod}1,
-  [#-- R12, --]
-  R${mod}2,
-  [#-- R1 --]
-  R${mod}
+  [#-- Pattern2<Pattern<R11>, Pattern<R12>, R11, R12, R1> --]
+  Pattern2<Pattern<R${mod}1>, Pattern<R${mod}2>, R${mod}1, R${mod}2, R${mod}>
 [#elseif num == 3]
-  [#-- (P1:) Pattern2M<P11, M, P13, R11, R12, R1>, --]
-  Pattern2M<Pattern<R${mod}1>, M${mod}, Pattern<R${mod}2>, R${mod}1, R${mod}2, R${mod}>,
-  [#-- R11 --]
-  R${mod}1,
-  [#-- M --]
-  M${mod},
-  [#-- R12 --]
-  R${mod}2,
-  [#-- R1 --]
-  R${mod}
+  [#-- Pattern2M<P11, M, P13, R11, R12, R1> --]
+  Pattern2M<Pattern<R${mod}1>, M${mod}, Pattern<R${mod}2>, R${mod}1, R${mod}2, R${mod}>
 [/#if]
 [/@compress]
+[/#macro]
+
+
+[#macro PatternVars mod num]
+  [@compress single_line=true]
+  [#if num == 0]R${mod}
+  [#elseif num == 1]
+    R${mod}1, R${mod}
+  [#elseif num == 2]
+    [#-- R11, R12, R1 --]
+    R${mod}1, R${mod}2, R${mod}
+  [#elseif num == 3]
+    [#-- R11, M, R12, R1 --]
+    R${mod}1, M${mod}, R${mod}2, R${mod}
+  [/#if]
+  [/@compress]
 [/#macro]
 
 
@@ -110,13 +111,13 @@ package io.decomat
 [#-- fun <P1: Pattern1<P11, R11, R1>, P2: Pattern0<R2>, P11: Pattern<R11>, R11, R1, R2, R> case(pat: Pattern2<P1, P2, R1, R2, R>) = Then10(pat, {true}) --]
 
 [#-- No 'M' variable for these because these are all based on Pattern2, a separate clause is for Pattern2M variants --]
-fun <P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R> case(pat: [@Pattern 2 /]) = Then${i1}${i2}(pat, {true})
+fun <[@PatternVars 1 i1 /], [@PatternVars 2 i2 /], R> case(pat: [@Pattern 2 i1 i2 /]) = Then${i1}${i2}(pat, {true})
 
 [#-- No 'M' variable for these because these are all based on Pattern2, a separate clause is for Pattern2M variants --]
-class Then${i1}${i2}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R>(
-  override val pat: [@Pattern 2 /],
+class Then${i1}${i2}<[@PatternVars 1 i1 /], [@PatternVars 2 i2 /], R>(
+  override val pat: [@Pattern 2 i1 i2 /],
   override val check: (R) -> Boolean
-): Stage<[@Pattern 2 /], R> {
+): Stage<[@Pattern 2 i1 i2 /], R> {
 
   inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], [@Components 2 i2 /]) -> O): O {
     val (r1, r2) = pat.divideIntoComponentsAny(r as Any)
@@ -146,12 +147,12 @@ class Then${i1}${i2}<P1: [@PatternVars 1 i1 /], P2: [@PatternVars 2 i2 /], R>(
 [#list 0..3 as i1]
   [#list 0..3 as i2]
 
-fun <P1: [@PatternVars 1 i1 /], M, P2: [@PatternVars 2 i2 /], R> case(pat: [@Pattern 3 /]) = Then${i1}M${i2}(pat, {true})
+fun <[@PatternVars 1 i1 /], M, [@PatternVars 2 i2 /], R> case(pat: [@Pattern 3 i1 i2 /]) = Then${i1}M${i2}(pat, {true})
 
-class Then${i1}M${i2}<P1: [@PatternVars 1 i1 /], M, P2: [@PatternVars 2 i2 /], R>(
-  override val pat: [@Pattern 3 /],
+class Then${i1}M${i2}<[@PatternVars 1 i1 /], M, [@PatternVars 2 i2 /], R>(
+  override val pat: [@Pattern 3 i1 i2 /],
   override val check: (R) -> Boolean
-): Stage<[@Pattern 3 /], R> {
+): Stage<[@Pattern 3 i1 i2 /], R> {
 
   inline fun <O> useComponents(r: R, f: ([@Components 1 i1 /], M, [@Components 2 i2 /]) -> O): O {
     val (r1, m, r2) = pat.divideInto3ComponentsAny(r as Any)

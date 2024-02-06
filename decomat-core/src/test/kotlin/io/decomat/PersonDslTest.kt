@@ -9,7 +9,7 @@ class PersonDslTest: DecomatTest {
   val wrongAnswer = Res2("Wrong", "Answer")
 
   @Test
-  fun `Person(Name("Joe", Is))`() {
+  fun `Person(Name("Joe", "Bloggs" not "Roggs"))`() {
     val result =
       on(Person(Name("Joe", "Bloggs"), 123)).match(
         case(Person[Name[Is("Joe"), Is("Roggs")]])
@@ -24,7 +24,7 @@ class PersonDslTest: DecomatTest {
   }
 
   @Test
-  fun `Person(Name(== "Joe", Is))`() {
+  fun `Person(Name(== "Joe", == "Bloggs" not "Roggs"))`() {
     val result =
       on(Person(Name("Joe", "Bloggs"), 123)).match(
         case(Person[Name[Is {it == "Joe"}, Is {it == "Roggs"}]])
