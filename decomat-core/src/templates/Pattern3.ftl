@@ -30,25 +30,25 @@
 [@compress single_line=true]
 [#if num == 0]Pattern0<R${mod}>, R${mod}
 [#elseif num == 1]
-  Pattern1<P${mod}1, R${mod}1, R${mod}>, P${mod}1: Pattern<R${mod}1>, R${mod}1, R${mod}
+  Pattern1<Pattern<R${mod}1>, R${mod}1, R${mod}>, R${mod}1, R${mod}
 [#elseif num == 2]
-  [#-- (P1:) Pattern2<P11, P12, R11, R12, R1>, --]
-  Pattern2<P${mod}1, P${mod}2, R${mod}1, R${mod}2, R${mod}>,
-  [#-- P11: Pattern<R11>, P12: Pattern<R12>, R11, R12, R1, --]
-  P${mod}1: Pattern<R${mod}1>, R${mod}1,
-  [#-- P21: Pattern<R21>, P22: Pattern<R22>, R21, R22, R2, --]
-  P${mod}2: Pattern<R${mod}2>, R${mod}2,
+  [#-- (P1:) Pattern2<Pattern<R11>, Pattern<R12>, R11, R12, R1>, --]
+  Pattern2<Pattern<R${mod}1>, Pattern<R${mod}2>, R${mod}1, R${mod}2, R${mod}>,
+  [#-- R11, --]
+  R${mod}1,
+  [#-- R12, --]
+  R${mod}2,
   [#-- R1 --]
   R${mod}
 [#elseif num == 3]
   [#-- (P1:) Pattern2M<P11, M, P13, R11, R12, R1>, --]
-  Pattern2M<P${mod}1, M${mod}, P${mod}2, R${mod}1, R${mod}2, R${mod}>,
-  [#-- P11: Pattern<R11>, R11 --]
-  P${mod}1: Pattern<R${mod}1>, R${mod}1,
+  Pattern2M<Pattern<R${mod}1>, M${mod}, Pattern<R${mod}2>, R${mod}1, R${mod}2, R${mod}>,
+  [#-- R11 --]
+  R${mod}1,
   [#-- M --]
   M${mod},
-  [#-- P12: Pattern<R12>, R12 --]
-  P${mod}2: Pattern<R${mod}2>, R${mod}2,
+  [#-- R12 --]
+  R${mod}2,
   [#-- R1 --]
   R${mod}
 [/#if]
