@@ -24,7 +24,7 @@ apply(plugin = "io.github.gradle-nexus.publish-plugin")
 allprojects {
 
   group = "io.exoquery"
-  version = "0.0.4"
+  version = "0.0.5"
 
   apply(plugin = "kotlin")
   apply(plugin = "maven-publish")
@@ -112,34 +112,43 @@ subprojects {
     }
   }
 
+  /*
+  Cannot use `publications.withType<MavenPublication> { ... } ` approach using kotlin-jvm unlike KMP
+  it seems that in KMP the publication is is already created internally and you just have to configure it.
+   */
   publishing {
-    publications.withType<MavenPublication> {
-      pom {
-        name.set("decomat")
-        description.set("DecoMat - Deconstructive Pattern Matching for Kotlin")
-        url.set("https://github.com/deusaquilus/pprint-kotlin")
+    publications {
+      create<MavenPublication>("mavenJava") {
+        from(components["kotlin"])
+        artifactId = varintName
 
-        licenses {
-          license {
-            name.set("The Apache Software License, Version 2.0")
-            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-            distribution.set("repo")
+        pom {
+          name.set("decomat")
+          description.set("DecoMat - Deconstructive Pattern Matching for Kotlin")
+          url.set("https://github.com/exoquery/decomat")
+
+          licenses {
+            license {
+              name.set("The Apache Software License, Version 2.0")
+              url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+              distribution.set("repo")
+            }
           }
-        }
 
-        developers {
-          developer {
-            name.set("Alexander Ioffe")
-            email.set("deusaquilus@gmail.com")
-            organization.set("github")
-            organizationUrl.set("http://www.github.com")
+          developers {
+            developer {
+              name.set("Alexander Ioffe")
+              email.set("deusaquilus@gmail.com")
+              organization.set("github")
+              organizationUrl.set("http://www.github.com")
+            }
           }
-        }
 
-        scm {
-          url.set("https://github.com/exoquery/decomat/tree/main")
-          connection.set("scm:git:git://github.com/ExoQuery/DecoMat.git")
-          developerConnection.set("scm:git:ssh://github.com:ExoQuery/DecoMat.git")
+          scm {
+            url.set("https://github.com/exoquery/decomat/tree/main")
+            connection.set("scm:git:git://github.com/ExoQuery/DecoMat.git")
+            developerConnection.set("scm:git:ssh://github.com:ExoQuery/DecoMat.git")
+          }
         }
       }
     }
@@ -157,7 +166,7 @@ subprojects {
     signing {
       // use the properties passed as command line args
       // -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} -Psigning.secretKeyRingFile=$(echo ~/.gradle/secring.gpg)
-      sign(publishing.publications)
+      sign(publishing.publications["mavenJava"])
     }
   }
 }
