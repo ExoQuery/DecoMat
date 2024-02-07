@@ -215,11 +215,11 @@ class DecomatProcessor(
 
     when {
       modelType is ModelType.A && productClassName != "io.decomat.ProductClass1" ->
-        logger.error("The productComponents property must be of type io.decomat.ProductClass1 in the class ${parentClass} but instead it was ${productClassName}. ${addendum}")
+        logger.error("The productComponents property must be of type io.decomat.ProductClass1 in the class ${parentClass} but instead it was ${productClassName}. ${addendum}", productComponents)
       modelType is ModelType.AB && productClassName != "io.decomat.ProductClass2" ->
-        logger.error("The productComponents property must be of type io.decomat.ProductClass2 in the class ${parentClass} but instead it was ${productClassName}. ${addendum}")
+        logger.error("The productComponents property must be of type io.decomat.ProductClass2 in the class ${parentClass} but instead it was ${productClassName}. ${addendum}", productComponents)
       modelType is ModelType.AMB && productClassName != "io.decomat.ProductClass2M" ->
-        logger.error("The productComponents property must be of type io.decomat.ProductClass2M in the class ${parentClass} but instead it was ${productClassName}. ${addendum}")
+        logger.error("The productComponents property must be of type io.decomat.ProductClass2M in the class ${parentClass} but instead it was ${productClassName}. ${addendum}", productComponents)
       else -> {}
     }
   }
@@ -270,6 +270,12 @@ class DecomatProcessor(
           is ModelType.None -> ""
         }
 
+      fun tryQualified(m: DecomatProcessor.Member): String =
+        m.qualifiedClassName ?: run {
+          logger.warn("Fully qualified name of `${m.field.type.toString()}` was null using regular name: ${m.className}")
+          m.className
+        }
+
       val patLetters =
         when (modelType) {
           // e.g. the A in Pattern1<A, AP, FlatMap>
@@ -278,7 +284,7 @@ class DecomatProcessor(
           is ModelType.AB -> listOf("A", "B")
           // e.g. the A and String and B in Pattern2M<A, String, B, AP, BP, FlatMap>
           // I.e. the actual M-parameter is a concrete type per the data-class that XYZ_M class is being defined for
-          is ModelType.AMB -> listOf("A", modelType.m.className, "B")
+          is ModelType.AMB -> listOf("A", tryQualified(modelType.m), "B")
           is ModelType.None -> listOf()
         }
 
