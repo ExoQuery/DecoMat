@@ -13,6 +13,12 @@ inline fun <P1 : Pattern<R1>, P2 : Pattern<R2>, R1, R2, reified R> customPattern
   noinline matchName: (R) -> Components2<R1, R2>?
 ): Pattern2<P1, P2, R1, R2, R> = CustomPattern2(nested1, nested2, matchName, Typed<R>())
 
+inline fun <P1 : Pattern<R1>, M, P2 : Pattern<R2>, R1, R2, reified R> customPattern2M(
+  nested1: P1,
+  nested2: P2,
+  noinline matchName: (R) -> Components2M<R1, M, R2>?
+): Pattern2M<P1, M, P2, R1, R2, R> = CustomPattern2M(nested1, nested2, matchName, Typed<R>())
+
 class CustomPattern1<P1 : Pattern<R1>, R1, R>(
   val innerMatch: P1,
   val match: (R) -> Components1<R1>?,

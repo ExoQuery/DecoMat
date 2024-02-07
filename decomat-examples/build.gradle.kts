@@ -1,4 +1,6 @@
 import com.google.devtools.ksp.gradle.KspTask
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
   kotlin("jvm")
@@ -33,6 +35,19 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
   }
 }
 
+tasks.test {
+  useJUnitPlatform()
+}
+
+tasks.withType<AbstractTestTask>().configureEach {
+  testLogging {
+    showStandardStreams = true
+    showExceptions = true
+    exceptionFormat = TestExceptionFormat.SHORT
+    events(TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+  }
+}
+
 //ksp {
 //  // Passing an argument to the symbol processor.
 //  // Change value to "true" in order to apply the argument.
@@ -46,6 +61,3 @@ dependencies {
   testImplementation(kotlin("test"))
 }
 
-tasks.named<Test>("test") {
-  useJUnitPlatform()
-}

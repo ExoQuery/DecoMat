@@ -1,24 +1,46 @@
 package io.decomat
 
-import com.google.devtools.ksp.getAnnotationsByType
-import com.google.devtools.ksp.innerArguments
-import com.google.devtools.ksp.isLocal
+import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.processing.*
-import com.google.devtools.ksp.symbol.ClassKind
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSValueParameter
-import java.awt.Component
+import com.google.devtools.ksp.symbol.*
+
 
 class DecomatProcessor(
   private val logger: KSPLogger,
   val codeGenerator: CodeGenerator,
   val matchableAnnotationName: String,
-  val componentAnnotationName: String
+  val componentAnnotationName: String,
+  val middleComponentAnnotationName: String
 ) : SymbolProcessor {
+
+  private val Fail = object {
+    fun CannotAnnotateParameter(symbol: KSNode, annotName: String) = logger.error("Cannot annotate the parameter ${symbol}. Only val-parameters are allowed to be annotated via @${annotName}.", symbol)
+    fun CannotAnnotateMutableParameter(symbol: KSNode, annotName: String) = logger.error("Cannot annotate the mutable parameter ${symbol}. Only non-mutable parameters are allowed to be annotated via @${annotName}.", symbol)
+    fun PropertyHasNoName(symbol: KSValueParameter, annotName: String) = logger.error("The property ${symbol} has no name. It must have a name to be annotated with @${annotName}.", symbol)
+  }
+
+  data class PropertyHolder(val name: String, val type: KSType)
 
   override fun process(resolver: Resolver): List<KSAnnotated> {
     val symbols = resolver.getSymbolsWithAnnotation("io.decomat.Matchable")
+
+    fun findComponents(sym: KSClassDeclaration, annotName: String) =
+      (sym.primaryConstructor?.parameters?.filter {
+        val hasAnnotation = it.annotations.any { annot -> annot.shortName.getShortName() == annotName }
+        if (hasAnnotation && !it.isVal) Fail.CannotAnnotateParameter(it, annotName)
+        hasAnnotation
+      } ?: emptyList()).map {
+        fun noName() = Fail.PropertyHasNoName(it, annotName).let { "<???>" }
+        PropertyHolder(it.name?.getShortName() ?: noName(), it.type.resolve())
+      } +
+      (sym.getAllProperties().filter {
+        val hasAnnotation = it.annotations.any { annot -> annot.shortName.getShortName() == annotName }
+        if (hasAnnotation && it.isMutable) Fail.CannotAnnotateMutableParameter(it, annotName)
+        hasAnnotation
+      }).map { PropertyHolder(it.simpleName.getShortName(), it.type.resolve()) }
+
+    data class ComponentsToGen(val sym: KSClassDeclaration, val componentElements: List<PropertyHolder>, val middleElements: List<PropertyHolder>, val useStarProjection: Boolean, val productComponents: KSPropertyDeclaration?)
+
     val componentsToGen =
       symbols
         .mapNotNull { sym ->
@@ -27,26 +49,31 @@ class DecomatProcessor(
               val useStarProjection =
                 sym.annotations.find { it.shortName.getShortName() == matchableAnnotationName }?.arguments?.get(0)?.value as? Boolean ?: true
 
-              // TODO also allow annotation on values in body (maybe even methods?)
-              val componentElements =
-                sym.primaryConstructor?.parameters?.filter {
-                  val isVal = it.isVal
-                  if (!isVal) logger.error("Cannot introspect the parameter. Only val-parameters are allowed.", it)
-                  val hasAnnotation = it.annotations.any { annot -> annot.shortName.getShortName() == componentAnnotationName }
-                  isVal && hasAnnotation
-                } ?: emptyList()
+              val componentElements = findComponents(sym, componentAnnotationName)
+              // Only actually allowed to have one of these but keep a list anyhow
+              val middleElements = findComponents(sym, middleComponentAnnotationName)
 
               if (componentElements.isEmpty()) {
                 logger.error("No @Component parameters found in the primary constructor of the class $sym (They must be the annotation @${matchableAnnotationName})")
               }
 
+              val hasProductClass = sym.superTypes.any { it.resolve().declaration.qualifiedName?.asString() == "io.decomat.HasProductClass" }
+              val productClass = sym.superTypes.any { it.resolve().declaration.qualifiedName?.asString() == "io.decomat.ProductClass" }
+
               //logger.warn("Super types for: ${sym}: ${sym.superTypes.toList()}")
               //sym.superTypes.forEach { logger.warn("----------- Qualified Class: ${it.resolve().declaration.qualifiedName?.asString()}") }
 
-              if (sym.superTypes.find {
-                val name = it.resolve().declaration.qualifiedName?.asString()
-                name == "io.decomat.HasProductClass" || name == "io.decomat.ProductClass"
-              } == null) {
+              val productComponents =
+                if (hasProductClass) {
+                  val productComponents = sym.getDeclaredProperties().find { it.simpleName.getShortName() == "productComponents" }
+                  if (productComponents == null) {
+                    logger.error("The class $sym is a subtype of io.decomat.HasProductClass but does not have a property `productComponents` this should be impossible.")
+                  }
+                  productComponents
+                }
+                else null
+
+              if (!hasProductClass && !productClass) {
                 logger.error("""
                   The class $sym is not a subtype of io.decomat.HasProductClass or io.decomat.ProductClass.
                   In order to be able to annotate this class with @${matchableAnnotationName} do make it extend HasProductClass
@@ -60,8 +87,7 @@ class DecomatProcessor(
                   }
                 """.trimIndent())
               }
-
-              Triple(sym, componentElements, useStarProjection)
+              ComponentsToGen(sym, componentElements, middleElements, useStarProjection, productComponents)
             }
             else ->
               null
@@ -71,23 +97,33 @@ class DecomatProcessor(
     if (componentsToGen.isEmpty())
       logger.warn("No classes found with the @Matchable interface.")
     else {
-      val description = componentsToGen.map { (cls, comps) -> "${cls.simpleName.getShortName()}(${comps.map { it.name?.getShortName() ?: "<Unknown-Name>" }.joinToString(", ")})" }.joinToString(", ")
+      val description = componentsToGen.map { (cls, comps) -> "${cls.simpleName.getShortName()}(${comps.map { it.name }.joinToString(", ")})" }.joinToString(", ")
       logger.warn("Found the following classes/components with the @Matchable/@Component annotations: ${description}")
     }
 
-    componentsToGen.forEach { (cls, members, useStarProjection) ->
-      // TODO Need to test
-      if (members.size > 3) {
-        logger.error("The Matchable class ${cls.simpleName.asString()} has more than 3 components (i.e. ${members.size}). No more than 3 are supported so far.")
+    componentsToGen.forEach { (cls, members, middleMembers, useStarProjection, productComponents) ->
+      if (middleMembers.size > 1) {
+        logger.error("The Matchable class ${cls.simpleName.asString()} has more than one @${middleComponentAnnotationName} components (i.e. ${members.size}). No more than 1 is supported so far.")
       }
 
-      generateExtensionFunction(GenModel.fromClassAndMembers(cls, members, useStarProjection))
+      if (members.size > 2) {
+        logger.error("The Matchable class ${cls.simpleName.asString()} has more than two @${componentAnnotationName} components (i.e. ${members.size}). No more than 2 are supported so far.")
+      }
+
+      generateExtensionFunction(GenModel.fromClassAndMembers(cls, members, middleMembers, useStarProjection, productComponents))
     }
 
     return listOf()
   }
 
-  data class GenModel private constructor(val imports: List<String>, val members: List<Member>, val ksClass: KSClassDeclaration, val useStarProjection: Boolean) {
+  sealed interface ModelType {
+    data class A(val a: Member): ModelType
+    data class AB(val a: Member, val b: Member): ModelType
+    data class AMB(val a: Member, val m: Member, val b: Member): ModelType
+    object None: ModelType
+  }
+
+  data class GenModel private constructor(val imports: List<String>, val members: List<Member>, val middleMembers: List<Member>, val ksClass: KSClassDeclaration, val useStarProjection: Boolean, val productComponents: KSPropertyDeclaration?) {
     val packageName = ksClass.packageName.asString()
     val className = ksClass.simpleName.asString()
     val fullClassName = ksClass.qualifiedName?.asString()
@@ -105,10 +141,18 @@ class DecomatProcessor(
         // Otherwise it's not a star-projection and we can use the plain class name
         ksClass.toString()
 
-      companion object {
-      fun fromClassAndMembers(ksClass: KSClassDeclaration, ksParams: List<KSValueParameter>, useStarProjection: Boolean): GenModel {
-        val members = ksParams.map { param ->
-          val tpe = param.type.resolve()
+    fun toModelType(): ModelType =
+      when {
+        members.size == 1 && middleMembers.isEmpty() -> ModelType.A(members[0])
+        members.size == 2 && middleMembers.isEmpty() -> ModelType.AB(members[0], members[1])
+        members.size == 2 && middleMembers.size == 1 -> ModelType.AMB(members[0], middleMembers[0], members[1])
+        else -> ModelType.None
+      }
+
+    companion object {
+      fun fromClassAndMembers(ksClass: KSClassDeclaration, regularParams: List<PropertyHolder>, middleParams: List<PropertyHolder>, useStarProjection: Boolean, productComponents: KSPropertyDeclaration?): GenModel {
+        fun parseRegularParam(param: PropertyHolder): Member {
+          val tpe = param.type
           val decl = tpe.declaration
           val typeParamNames = ksClass.typeParameters.map { it.qualifiedName }
 
@@ -122,23 +166,26 @@ class DecomatProcessor(
           // for the parameters, if they have generic types you we want those to have starts e.g. Query<*> if it's Query<T>
           // NOTE: Removing `.starProjection()` makes type work (mostly) but seems to make matching too strict
           val name =
-            param.type.resolve().let { paramTpe ->
+            tpe.let { paramTpe ->
               if (useStarProjection)
                 paramTpe.starProjection().toString()
               else
                 paramTpe.toString()
             }
 
-          Member(name, fullName, param)
+          return Member(name, fullName, param)
         }
+
+        val members = regularParams.map { parseRegularParam(it) }
+        val middleMembers = middleParams.map { parseRegularParam(it) }
 
         val classFullNameListElem =
           ksClass.qualifiedName?.asString()?.let { listOf(it) } ?: listOf()
 
         val additionalImports =
-          classFullNameListElem + members.mapNotNull { it.fullName }
+          classFullNameListElem + members.mapNotNull { it.qualifiedClassName }
 
-        return GenModel(defaultImports + additionalImports.distinct(), members, ksClass, useStarProjection)
+        return GenModel(defaultImports + additionalImports.distinct(), members, middleMembers, ksClass, useStarProjection, productComponents)
       }
 
       val defaultImports = listOf(
@@ -152,9 +199,29 @@ class DecomatProcessor(
 
     }
   }
-  data class Member(val name: String, val fullName: String?, val ksParam: KSValueParameter) {
-    // since we are going to add components to the imports, use regular name for the use-site
-    val useSiteName = name
+  data class Member(val className: String, val qualifiedClassName: String?, val field: PropertyHolder)
+
+  /**
+   * Based on the number of @Component/@MiddleComponent parameters, validate that the productComponents property is of the correct type
+   * for example:
+   * if there is one @Component parameter, the productComponents property must be of type io.decomat.ProductClass1
+   * if there are two @Compoent parameters, the productComponents property must be of type io.decomat.ProductClass2
+   * if there are two @Compoent parameters and one @MiddleComponent parameter, the productComponents property must be of type io.decomat.ProductClass2M
+   */
+  private fun validateProductComponentsType(modelType: ModelType, productComponents: KSPropertyDeclaration) {
+    val productClassName = productComponents.type.resolve().declaration.qualifiedName?.asString()
+    val parentClass = productComponents.parentDeclaration?.qualifiedName?.asString()
+    val addendum = "Perhaps you are passing in too many or too few properties into the function `productComponentsOf`?"
+
+    when {
+      modelType is ModelType.A && productClassName != "io.decomat.ProductClass1" ->
+        logger.error("The productComponents property must be of type io.decomat.ProductClass1 in the class ${parentClass} but instead it was ${productClassName}. ${addendum}")
+      modelType is ModelType.AB && productClassName != "io.decomat.ProductClass2" ->
+        logger.error("The productComponents property must be of type io.decomat.ProductClass2 in the class ${parentClass} but instead it was ${productClassName}. ${addendum}")
+      modelType is ModelType.AMB && productClassName != "io.decomat.ProductClass2M" ->
+        logger.error("The productComponents property must be of type io.decomat.ProductClass2M in the class ${parentClass} but instead it was ${productClassName}. ${addendum}")
+      else -> {}
+    }
   }
 
   private fun generateExtensionFunction(model: GenModel) {
@@ -162,6 +229,10 @@ class DecomatProcessor(
     val className = model.className
     val classUseSiteName = model.useSiteName
     val companionName = model.className
+
+    val modelType = model.toModelType()
+
+    if (model.productComponents != null) validateProductComponentsType(modelType, model.productComponents)
 
     val file = codeGenerator.createNewFile(
       Dependencies.ALL_FILES, packageName, "${className}DecomatExtensions"
@@ -172,9 +243,9 @@ class DecomatProcessor(
         model.members.withIndex().map { (num, member) ->
           val letter = ('a' + num).uppercase()
           f(member, letter)
-        }.joinToString(", ")
+        }
 
-      val memberParams = model.members.map { it.name }
+      val memberParams = model.members.map { it.className }
 
       val typeParams =
         model.ksClass.typeParameters
@@ -188,16 +259,39 @@ class DecomatProcessor(
 
       //logger.warn("---------- Type Params: ${typeParams}")
 
+      val mString = if (model.middleMembers.isNotEmpty()) "M" else ""
+
       // Generate: A: Pattern<AP>, B: Pattern<BP>
-      val pats = eachLetter { "$it: Pattern<${it}P>" }
+      val pats =
+        when (modelType) {
+          is ModelType.A -> "A: Pattern<AP>"
+          is ModelType.AB -> "A: Pattern<AP>, B: Pattern<BP>"
+          is ModelType.AMB -> "A: Pattern<AP>, B: Pattern<BP>" // No M is defined here because it is a concrete type in patLetters below
+          is ModelType.None -> ""
+        }
+
+      val patLetters =
+        when (modelType) {
+          // e.g. the A in Pattern1<A, AP, FlatMap>
+          is ModelType.A -> listOf("A")
+          // e.g. the A and B in Pattern2<A, B, AP, BP, FlatMap>
+          is ModelType.AB -> listOf("A", "B")
+          // e.g. the A and String and B in Pattern2M<A, String, B, AP, BP, FlatMap>
+          // I.e. the actual M-parameter is a concrete type per the data-class that XYZ_M class is being defined for
+          is ModelType.AMB -> listOf("A", modelType.m.className, "B")
+          is ModelType.None -> listOf()
+        }
+
+      fun List<String>.commaSep() = joinToString(", ")
+
       // Generate: AP: Query, BP: Query
-      val patTypes = eachLetter { "${it}P: ${this.useSiteName}" } + if (typeParams.isNotEmpty()) ", " + typeParams.joinToString(", ") else ""
+      val patTypes = (eachLetter { "${it}P: ${this.className}" } + typeParams).commaSep()
       // Generate: Pattern2<A, B, AP, BP, FlatMap>
-      val subClass = "Pattern${model.members.size}<${eachLetter { it.uppercase() }}, ${eachLetter { "${it}P" }}, $classUseSiteName>"
+      val subClass = "Pattern${model.members.size}${mString}<${(patLetters + eachLetter { "${it}P" } + listOf(classUseSiteName)).commaSep()}>"
       // Generate: a: A, b: B
-      val classValsTypes = eachLetter { "${it.lowercase()}: $it" }
+      val classValsTypes = eachLetter { "${it.lowercase()}: $it" }.commaSep()
       // Generate: a, b
-      val classVals = eachLetter { it.lowercase() }
+      val classVals = eachLetter { it.lowercase() }.commaSep()
 
 
       writer.apply {

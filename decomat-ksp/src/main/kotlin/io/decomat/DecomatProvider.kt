@@ -10,9 +10,11 @@ class DecomatProvider : SymbolProcessorProvider {
       environment.options.get("matchableName") ?: "Matchable"
     val componentAnnotationName =
       environment.options.get("componentName") ?: "Component"
+    val middleComponentAnnotationName =
+      environment.options.get("middleComponentName") ?: "MiddleComponent"
     return DecomatProcessor(
       environment.logger, environment.codeGenerator,
-      matchableAnnotationName, componentAnnotationName
+      matchableAnnotationName, componentAnnotationName, middleComponentAnnotationName
     )
   }
 }

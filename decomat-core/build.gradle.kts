@@ -11,6 +11,8 @@ import freemarker.template.TemplateDirectiveBody
 import freemarker.template.TemplateModel
 import freemarker.template.SimpleScalar
 import freemarker.template.Template
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.impldep.org.apache.commons.io.output.ByteArrayOutputStream
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.Writer
@@ -58,13 +60,23 @@ tasks.register<TemplateTask>("template_base", TemplateTask::class) {
 //    }
 //}
 
-//tasks.test {
-//    useJUnitPlatform()
-//}
-
-tasks.named<Test>("test") {
+tasks.test {
     useJUnitPlatform()
 }
+
+
+tasks.withType<AbstractTestTask>().configureEach {
+    testLogging {
+        showStandardStreams = true
+        showExceptions = true
+        exceptionFormat = TestExceptionFormat.SHORT
+        events(TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+    }
+}
+
+//tasks.named<Test>("test") {
+//    useJUnitPlatform()
+//}
 
 kotlin {
     jvmToolchain(8)
