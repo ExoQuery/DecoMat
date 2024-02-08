@@ -1,3 +1,5 @@
+include(":decomat-core", ":decomat-ksp", ":decomat-examples")
+
 pluginManagement {
   plugins {
     id("com.google.devtools.ksp") version "1.8.20-1.0.11"
@@ -11,7 +13,3 @@ pluginManagement {
 }
 
 rootProject.name = "decomat"
-
-include(":decomat-core")
-include(":decomat-ksp")
-include(":decomat-examples")

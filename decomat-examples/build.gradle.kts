@@ -1,63 +1,138 @@
-import com.google.devtools.ksp.gradle.KspTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 
 plugins {
-  kotlin("jvm")
+  kotlin("multiplatform")
+  signing
   id("com.google.devtools.ksp")
-
-//  application
 }
 
-// Allows running from command line using  ./gradlew :main-project:run
-//application {
-//  mainClass.set("com.morfly.MainKt")
-//}
+kotlin {
+  val isCI = project.hasProperty("isCI")
+  val platform =
+    if (project.hasProperty("platform"))
+      project.property("platform")
+    else
+      "any"
+  val isLinux = platform == "linux"
+  val isMac = platform == "mac"
+  val isWindows = platform == "windows"
 
-// Makes generated code visible to IDE
-kotlin.sourceSets.main {
-  kotlin.srcDirs(
-    file("$buildDir/generated/ksp/main/kotlin"),
-  )
-}
+  jvm {
+    jvmToolchain(11)
+  }
 
-/**
- * While using Java 11 need to configure it this way or an error will be thrown:
- *   Execution failed for task ':decomat-examples:kspKotlin'.
- *   'compileJava' task (current target is 1.8) and 'kspKotlin' task (current target is 11) jvm target compatibility should be set to the same Java version.
- * See info on the issue here: https://github.com/google/ksp/issues/1288
- * Also here: https://youtrack.jetbrains.com/issue/KT-55947
- * Also here: https://stackoverflow.com/questions/69079963/how-to-set-compilejava-task-11-and-compilekotlin-task-1-8-jvm-target-com/76005200#76005200
- */
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-  kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_1_8.toString()
+  // If we're not the CI build a limited set of standard targets
+  if(!isCI) {
+//    js {
+//      browser()
+//      nodejs()
+//    }
+
+    linuxX64()
+//    macosX64()
+//    mingwX64()
+  }
+
+  // If we are a CI, build all the targets for the specified platform
+  if (isLinux && isCI) {
+//    js {
+//      browser()
+//      nodejs()
+//    }
+
+    linuxX64()
+    linuxArm64()
+
+//    @OptIn(ExperimentalWasmDsl::class)
+//    wasmWasi()
+//    @OptIn(ExperimentalWasmDsl::class)
+//    wasmJs()
+
+    androidNativeX64()
+    androidNativeX86()
+    androidNativeArm32()
+    androidNativeArm64()
+
+    // Linux needs to know about these
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+//    tvosX64()
+//    tvosArm64()
+//    watchosX64()
+//    watchosArm32()
+//    watchosArm64()
+
+    mingwX64()
+  }
+
+  if (isMac && isCI) {
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+//    tvosX64()
+//    tvosArm64()
+//    watchosX64()
+//    watchosArm32()
+//    watchosArm64()
+  }
+  if (isWindows && isCI) {
+    mingwX64()
+  }
+
+  sourceSets {
+    commonMain {
+      dependencies {
+        kotlin.srcDir("$buildDir/generated/ksp/main/kotlin")
+        api(project(":decomat-core"))
+      }
+    }
+
+    commonTest {
+      dependencies {
+        // Used to ad-hoc some examples but not needed.
+        //api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.2")
+        //implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+        implementation(kotlin("test"))
+        implementation(kotlin("test-common"))
+        implementation(kotlin("test-annotations-common"))
+      }
+    }
   }
 }
 
-tasks.test {
-  useJUnitPlatform()
+dependencies {
+  add("kspCommonMainMetadata", project(":decomat-ksp"))
+
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
+  if (name != "kspCommonMainKotlinMetadata") {
+    dependsOn("kspCommonMainKotlinMetadata")
+  }
+}
+
+if (project.hasProperty("platform") && project.property("platform") == "linux") {
+  tasks.named<Test>("jvmTest") {
+    useJUnitPlatform()
+  }
 }
 
 tasks.withType<AbstractTestTask>().configureEach {
   testLogging {
     showStandardStreams = true
     showExceptions = true
-    exceptionFormat = TestExceptionFormat.SHORT
+    exceptionFormat = TestExceptionFormat.FULL
     events(TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
   }
 }
 
-//ksp {
-//  // Passing an argument to the symbol processor.
-//  // Change value to "true" in order to apply the argument.
-//  arg("ignoreGenericArgs", "false")
-//}
-
-dependencies {
-  implementation(project(":decomat-core"))
-  testImplementation("org.testng:testng:7.1.0")
-  ksp(project(":decomat-ksp"))
-  testImplementation(kotlin("test"))
+ksp {
+  arg("measureDuration", "true")
 }
-

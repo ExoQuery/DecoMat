@@ -1,10 +1,10 @@
 package io.decomat.middle
 
 import io.decomat.*
-import org.junit.jupiter.api.Assertions.assertFalse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 import kotlin.test.fail
 
 @Suppress("DANGEROUS_CHARACTERS")
@@ -18,16 +18,18 @@ class MatchTest {
   val idB = "BBB"
   val idC = "CCC"
 
+  // flatMap(?, ?)
   @Test
-  fun `flatMap(?, ?)`() {
+  fun flatMap_QxQ() {
     assertTrue(FlatMap[Is(), Is()].matches(FlatMap(foo, idA, bar)))
     assertTrue(FlatMap[Is(), Is()].matches(FlatMap(foo, idA, Map(foo, idB, Map(waz, idC, kaz)))))
   }
 
   infix fun <T> T.shouldBe(b: T): Unit = assertEquals(this, b)
 
+  // flatMap(?, Map(?))
   @Test
-  fun `flatMap(?, ?) - match`() {
+  fun flatMap_QxMapQ() {
     on(FlatMap(foo, idA, bar)).match(
       case(FlatMap[Is(), Is(waz)]).then { a, m, b -> fail() },
       case(FlatMap[Is(), Is()]).then { a, m, b -> Res3(a, m, b) }
@@ -37,8 +39,9 @@ class MatchTest {
     assertTrue(FlatMap[Is(), Is()].matches(FlatMap(foo, idA, Map(foo, idB, Map(waz, idC, kaz)))))
   }
 
+  // flatMap(?, Map(Map))
   @Test
-  fun `flatMap(?, Map(?))`() {
+  fun flatMap_QxMapMap() {
     on(FlatMap(foo, idA, Map(bar, idB, baz))).match(
       case(FlatMap[Is(), Map[Is(), Is(waz)]]).then { a, m, b -> fail() },
       case(FlatMap[Is(), Is()]).then { a, m, b -> Res3(a, m, b) }
@@ -49,8 +52,9 @@ class MatchTest {
     )
   }
 
+  // flatMap(Map(?), ?)
   @Test
-  fun `flatMap(Map(?), ?)`() {
+  fun flatMap_MapQxQ() {
     on(FlatMap(Map(foo, idB, bar), idA, baz)).match(
       case(FlatMap[Map[Is(), Is(waz)], Is()]).then { a, m, b -> fail() },
       case(FlatMap[Is(), Is()]).then { a, m, b -> Res3(a, m, b) }
@@ -61,8 +65,9 @@ class MatchTest {
     )
   }
 
+  // flatMap(Map(?), Map(?))
   @Test
-  fun `flatMap(Map(?), Map(?))`() {
+  fun flatMap_MapQxMapQ() {
     on(FlatMap(Map(foo, idA, bar), idB, Map(baz, idC, waz))).match(
       case(FlatMap[Map[Is(), Is(kaz)], Map[Is(), Is(kaz)]]).then { a, m, b -> fail() },
       case(FlatMap[Map[Is(), Is()], Map[Is(), Is()]]).then { (a1, am, a2), m, (b1, bm, b2) -> Res3(Res3(a1, am, a2), m, Res3(b1, bm, b2)) }
@@ -73,8 +78,9 @@ class MatchTest {
     )
   }
 
+  // flatMap(Map(?), Map(Map))
   @Test
-  fun `flatMap(?, Map(Map))`() {
+  fun flatMap_MapQxMapMap() {
     on(FlatMap(foo, idA, Map(bar, idB, baz))).match(
       case(FlatMap[Is(), Map[Is(), Is(waz)]]).then { a, m, b -> fail() },
       case(FlatMap[Is(), Map[Is(), Is()]]).then { a, m, (b1, m1, b2) -> Res3(a, m, Res3(b1, m1, b2)) }
@@ -85,8 +91,9 @@ class MatchTest {
     )
   }
 
+  // flatMap(Map(Map), ?)
   @Test
-  fun `flatMap(Map(Map), ?)`() {
+  fun flatMap_MapMapxQ() {
     on(FlatMap(Map(foo, idA, bar), idB, baz)).match(
       case(FlatMap[Map[Is(), Is(waz)], Is()]).then { a, m, b -> fail() },
       case(FlatMap[Map[Is(), Is()], Is()]).then { (a1, m1, a2), m, b -> Res3(Res3(a1, m1, a2), m, b) }
@@ -97,8 +104,9 @@ class MatchTest {
     )
   }
 
+  // flatMap(Map(Map), Map(Map))
   @Test
-  fun `flatMap(Map(Map), Map(Map))`() {
+  fun flatMap_MapMapxMapMap() {
     on(FlatMap(Map(foo, idA, bar), idB, Map(baz, idC, waz))).match(
       case(FlatMap[Map[Is(), Is(kaz)], Map[Is(), Is(kaz)]]).then { a, m, b -> fail() },
       case(FlatMap[Map[Is(), Is()], Map[Is(), Is()]]).then { (a1, m1, a2), m, (b1, m2, b2) -> Res3(Res3(a1, m1, a2), m, Res3(b1, m2, b2)) }
@@ -109,29 +117,33 @@ class MatchTest {
     )
   }
 
+  // flatMap(?, Map(!Entity) - Negative
   @Test
-  fun `flatMap(?, Map(!Entity) - Negative`() {
+  fun flatMap_QxMapEntity__Negative() {
     assertFalse(
       FlatMap[Is(), Map[Is(), Is<Entity>()]].matches(FlatMap(foo, idA, Map(foo, idB, Map(waz, idC, kaz))))
     )
   }
 
+  // flatMap(?, Map(!Map) - Negative
   @Test
-  fun `flatMap(?, Map(!Map) - Negative`() {
+  fun flatMap_QxMapNotMap__Negative() {
     assertFalse(
       FlatMap[Is(), Map[Is(), Is<Map>()]].matches(FlatMap(foo, idA, Map(foo, idB, foo)))
     )
   }
 
+  // flatMap(foo, Map(?))
   @Test
-  fun `flatMap(foo, Map(?))`() {
+  fun flatMap_FOOxMapQ() {
     assertTrue(
       FlatMap[Is(foo), Map[Is(), Is()]].matches(FlatMap(foo, idA, Map(foo, idB, foo)))
     )
   }
 
+  // flatMap(!foo, Map(?)) - Negative
   @Test
-  fun `flatMap(!foo, Map(?)) - Negative`() {
+  fun flatMap_NotFOOxMapQ__Negative() {
     assertFalse(
       FlatMap[Is(bar), Map[Is(), Is()]].matches(FlatMap(foo, idA, Map(foo, idB, foo)))
     )

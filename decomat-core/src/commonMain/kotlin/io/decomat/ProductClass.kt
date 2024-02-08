@@ -1,11 +1,6 @@
 package io.decomat
 
-import java.util.WeakHashMap
 import kotlin.reflect.KProperty1
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
 
 sealed interface ProductClass<out T> {
   val value: T

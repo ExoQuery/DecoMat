@@ -37,7 +37,7 @@ abstract class Pattern1<out P1: Pattern<R1>, out R1, out R>(val pattern1: P1, ov
   override fun matches(comps: ProductClass<@UnsafeVariance R>) =
   // E.g. for Distinct.M(...): Pattern1<...> check that the thing we are trying to match as `Distinct`
     // is actually a `Distinct` instances
-    comps.value.isType(typeR)
+    comps.value.isTypeOf(typeR)
       &&
       when(val compsDef = comps.isIfHas()) {
         is ProductClass1<*, *> ->

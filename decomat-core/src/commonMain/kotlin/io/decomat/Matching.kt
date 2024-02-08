@@ -46,10 +46,10 @@ interface Case<O, out R> {
 }
 
 inline fun <O, reified R> Case<O, R>.matches(value: Any) =
-  this.matches(value as? R ?: throw IllegalArgumentException("The value $value is not of type ${R::class.qualifiedName}"))
+  this.matches(value as? R ?: throw IllegalArgumentException("The value $value is not of type ${R::class}"))
 
 inline fun <O, reified R> Case<O, R>.eval(value: Any) =
-  this.eval(value as? R ?: throw IllegalArgumentException("The value $value is not of type ${R::class.qualifiedName}"))
+  this.eval(value as? R ?: throw IllegalArgumentException("The value $value is not of type ${R::class}"))
 
 
 class StageCase<O, out R> private constructor (

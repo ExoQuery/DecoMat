@@ -9,8 +9,9 @@ class PersonMiddleDslTest: DecomatTest {
 
   val wrongAnswer = Res2("Wrong", "Answer")
 
+  // Person(Name("Joe", "Bloggs" not "Roggs"))
   @Test
-  fun `Person(Name("Joe", "Bloggs" not "Roggs"))`() {
+  fun person_name_joe_bloggs_not_roggs() {
     val result =
       on(Person(Name("Joe", 11, "Bloggs"), "Jr", 123)).match(
         case(Person[Name[Is("Joe"), Is("Roggs")], Is()])
@@ -24,8 +25,9 @@ class PersonMiddleDslTest: DecomatTest {
     assertEquals(result, Res5("Joe", 11, "Bloggs", "Jr", 123))
   }
 
+  // Person(Name("Joe" not "Jack", "Bloggs"))
   @Test
-  fun `Person(Name("Joe" not "Jack", "Bloggs"))`() {
+  fun person_name_joe_not_jack_bloggs() {
     val result =
       on(Person(Name("Joe", 11, "Bloggs"), "Jr", 123)).match(
         case(Person[Name[Is(), Is("Roggs")], Is()])
@@ -39,8 +41,9 @@ class PersonMiddleDslTest: DecomatTest {
     assertEquals(result, Res5("Joe", 11, "Bloggs", "Jr", 123))
   }
 
+  // Person(Name(== "Joe", == "Bloggs" not "Roggs"))
   @Test
-  fun `Person(Name(== "Joe", == "Bloggs" not "Roggs"))`() {
+  fun person_name_joe_bloggs_not_roggs2() {
     val result =
       on(Person(Name("Joe", 11, "Bloggs"), "Jr", 123)).match(
         case(Person[Name[Is {it == "Joe"}, Is {it == "Roggs"}], Is()])
@@ -54,8 +57,9 @@ class PersonMiddleDslTest: DecomatTest {
     assertEquals(result, Res3(Res3("Joe", 11, "Bloggs"), "Jr", 123))
   }
 
+  // Person(Name(== "Joe" or "Jack", Is))
   @Test
-  fun `Person(Name(== "Joe" or "Jack", Is))`() {
+  fun person_name_joe_or_jack_is() {
     fun isOneOf(vararg ids: String) = Is<String> { ids.contains(it) }
     val result =
       on(Person(Name("Joe", 11, "Bloggs"), "Jr", 123)).match(
@@ -68,8 +72,9 @@ class PersonMiddleDslTest: DecomatTest {
     assertEquals(result, Res5("Joe", 11, "Bloggs", "Jr", 123))
   }
 
+  // Person(Name(== "Joe" or "Jack", Is))
   @Test
-  fun `Person(Name("Joe", Is)) - Decompose`() {
+  fun person_name_joe_or_jack_is2() {
     val result =
       on(Person(Name("Joe", 11, "Bloggs"), "Jr", 123)).match(
         case(Person[Name[Is("Joe"), Is("Roggs")], Is()])
@@ -83,8 +88,10 @@ class PersonMiddleDslTest: DecomatTest {
     assertEquals(result, Res5("Joe", 11, "Bloggs", "Jr", 123))
   }
 
+
+  // Person(Name("Joe", Is)) - thenIf - Positive
   @Test
-  fun `Person(Name("Joe", Is)) - thenIf - Positive`() {
+  fun person_name_joe_is_thenIf_positive() {
     val result =
       on(Person(Name("Joe", 11, "Bloggs"), "Jr", 123)).match(
         case(Person[Name[Is("Joe"), Is("Roggs")], Is()])
@@ -100,8 +107,9 @@ class PersonMiddleDslTest: DecomatTest {
     assertEquals(result, Res5("Joe", 11, "Bloggs", "Jr", 123))
   }
 
+  // Person(Name("Joe", Is)) - thenIf - Negative
   @Test
-  fun `Person(Name("Joe", Is)) - thenIf - Negative`() {
+  fun person_name_joe_is_thenIf_negative() {
     val result =
       on(Person(Name("Joe", 11, "Bloggs"), "Jr", 123)).match(
         case(Person[Name[Is("Joe"), Is("Roggs")], Is()])
