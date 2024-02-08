@@ -14,57 +14,114 @@ import freemarker.template.Template
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.impldep.org.apache.commons.io.output.ByteArrayOutputStream
+import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import java.io.Writer
 import java.nio.charset.Charset
 
 plugins {
-    kotlin("jvm")
-    id("maven-publish")
-    idea
-    // TODO Needed for the freemarker dependencies despite the fact that freemarker is imported
-    //      need to look into why freemarker can't be found if this plugin is removed.
+    kotlin("multiplatform")
     id("dev.anies.gradle.template")
     signing
-    id("org.jetbrains.dokka")
 }
 
-sourceSets["main"].kotlin.srcDir(file("build/templates"))
+kotlin {
+  val isCI = project.hasProperty("isCI")
+  val platform =
+      if (project.hasProperty("platform"))
+          project.property("platform")
+      else
+          "any"
+  val isLinux = platform == "linux"
+  val isMac = platform == "mac"
+  val isWindows = platform == "windows"
+
+  jvm {
+    jvmToolchain(11)
+  }
+
+  if(!isCI) {
+    js {
+      browser()
+      nodejs()
+    }
+
+    linuxX64()
+    macosX64()
+    mingwX64()
+  }
+
+  // If we are a CI, build all the targets for the specified platform
+  if (isLinux && isCI) {
+    js {
+      browser()
+      nodejs()
+    }
+
+    linuxX64()
+    linuxArm64()
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmWasi()
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs()
+
+    androidNativeX64()
+    androidNativeX86()
+    androidNativeArm32()
+    androidNativeArm64()
+
+    // Need to know about this since we publish the -tooling metadata from
+    // the linux containers. Although it doesn't build these it needs to know about them.
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+
+    mingwX64()
+  }
+
+  if (isMac && isCI) {
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    tvosX64()
+    tvosArm64()
+    watchosX64()
+    watchosArm32()
+    watchosArm64()
+  }
+  if (isWindows && isCI) {
+    mingwX64()
+  }
 
 
+    sourceSets {
+        commonMain {
+            kotlin.srcDir("$buildDir/templates/")
+            dependencies {
+            }
+        }
 
-/*
-Note that the error "could not list directory ...git/DecoMat/decomat-core/src/templates
-is actually misleading. The actual error will be something else in the freemarker template
-but for some reason a higher level task can't list the directory of the ftl building fails.
-In order to get the real error add --stacktrace to the './gradlew runFreemarkerTemplate' task
- */
-tasks.register<TemplateTask>("template_base", TemplateTask::class) {
-    data = mutableMapOf("key" to "value")
-    from("src/templates/")
-    into("build/templates/io/decomat")
+        commonTest {
+            kotlin.srcDir("$buildDir/templates/")
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+            }
+        }
+    }
 }
-
-//tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-//    kotlinOptions{
-//        freeCompilerArgs = listOf("-Xno-optimize")
-//    }
-//}
-
-//tasks.register("template", Sync::class) {
-//    dependsOn("template_base")
-//    from("build/templates/io/decomat")
-//    into("build/templates/io/decomat")
-//    include("*.ftl")
-//    rename { filename: String ->
-//        filename.replace(".ftl", ".kt")
-//    }
-//}
-
-tasks.test {
-    useJUnitPlatform()
-}
-
 
 tasks.withType<AbstractTestTask>().configureEach {
     testLogging {
@@ -75,22 +132,11 @@ tasks.withType<AbstractTestTask>().configureEach {
     }
 }
 
-//tasks.named<Test>("test") {
-//    useJUnitPlatform()
-//}
-
-kotlin {
-    jvmToolchain(8)
+tasks.register<TemplateTask>("template_base", TemplateTask::class) {
+    data = mutableMapOf("key" to "value")
+    from("src/templates/")
+    into("build/templates/io/decomat")
 }
-
-dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    testImplementation(kotlin("test"))
-    //implementation("com.facebook:ktfmt:0.43")
-    implementation(kotlin("reflect"))
-    implementation("org.freemarker:freemarker:2.3.31")
-}
-
 
 val runFreemarkerTemplate by tasks.registering {
     doLast {
@@ -129,11 +175,15 @@ tasks.withType<KotlinCompile> {
     dependsOn(runFreemarkerTemplate)
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
-        freeCompilerArgs = listOf("-Xcontext-receivers")
-    }
+tasks.withType<KotlinNativeCompile> {
+    dependsOn(runFreemarkerTemplate)
+}
+
+// THIS is the actual task used by the KMP multiplatform plugin. Without this,
+// the freemarker dependency won't run in time for the dependencies to pick it up.
+// That means that a command like `./gradlew clean build` for the base-project will fail.
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    dependsOn(runFreemarkerTemplate)
 }
 
 class OutputDirective : TemplateDirectiveModel {

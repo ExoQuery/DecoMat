@@ -13,6 +13,7 @@ class DecomatProcessor(
   val middleComponentAnnotationName: String,
   val constructorComponentAnnotationName: String,
   val renderAdtFunctions: Boolean,
+  val renderFromHereFunction: Boolean,
   val fromHereFunctionName: String,
   val fromFunctionName: String
 ) : SymbolProcessor {
@@ -157,8 +158,8 @@ class DecomatProcessor(
 
   sealed interface ModelType {
     data class A(val a: Member): ModelType
-    data class AB(val a: Member, val b: Member): ModelType
-    data class AMB(val a: Member, val m: Member, val b: Member): ModelType
+    data class AB(val a: Member, val b_ab: Member): ModelType
+    data class AMB(val a: Member, val m: Member, val b_amb: Member): ModelType
     object None: ModelType
   }
 
@@ -185,6 +186,17 @@ class DecomatProcessor(
         ksClass.asStarProjectedType().toString()
       else
         parametrizedName
+
+    val starProjectedName =
+      ksClass.asStarProjectedType().toString()
+
+      // TODO This generates Pattern<Query<T>> instead of Query<*>.  Explore situations where this shuold be the case
+      //else if (ksClass.typeParameters.isNotEmpty())
+      //// Actually get the full projection of hte class e.g. Query<T> instead of Query<*>. Not sure how to actually get `Query<T>` as a string from a KSClassDeclaration
+      //  "${ksClass.simpleName.getShortName()}<${ksClass.typeParameters.map { it.name.getShortName() }.joinToString(", ")}>" //.asStarProjectedType().toString()
+      //else
+      //// Otherwise it's not a star-projection and we can use the plain class name
+      //  ksClass.toString()
 
     fun toModelType(): ModelType =
       when {
@@ -292,7 +304,11 @@ class DecomatProcessor(
     val packageName = model.packageName
     val className = model.className
     val classUseSiteName = model.useSiteName
+    val classStarProjectedName = model.starProjectedName
     val companionName = model.className
+
+    fun Member.primitiveOrNull() = if (this.className == "String") "String" else null
+    fun Member.isPrimitive() = this.className == "String"
     val members = model.members
     val allMembers = model.allMembers
 
@@ -305,10 +321,25 @@ class DecomatProcessor(
     )
 
     file.bufferedWriter().use { writer ->
+      fun eachGenericLetter(f: Member.(String) -> String) =
+        model.members.withIndex().filter { (_, member) -> member.className != "String" }.map { (num, member) ->
+          val letter = ('a' + num).uppercase()
+          f(member, letter)
+        }
+
       fun eachLetter(f: Member.(String) -> String) =
         model.members.filter { it.field.isRegularComponent() }.withIndex().map { (num, member) ->
           val letter = ('a' + num).uppercase()
           f(member, letter)
+        }
+
+      fun eachTemplateParam(f: Member.(String) -> String) =
+        model.members.withIndex().map { (num, member) ->
+          val letter = ('a' + num).uppercase()
+          if (member.isPrimitive())
+            member.className
+          else
+            f(member, letter)
         }
 
       val memberParams = model.members.map { it.className }
@@ -331,12 +362,14 @@ class DecomatProcessor(
 
       val mString = if (model.middleMembers.isNotEmpty()) "M" else ""
 
+
+
       // Generate: A: Pattern<AP>, B: Pattern<BP>
       val pats =
         when (modelType) {
-          is ModelType.A -> "A: Pattern<AP>"
-          is ModelType.AB -> "A: Pattern<AP>, B: Pattern<BP>"
-          is ModelType.AMB -> "A: Pattern<AP>, B: Pattern<BP>" // No M is defined here because it is a concrete type in patLetters below
+          is ModelType.A -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>"
+          is ModelType.AB -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>, B: Pattern<${ members[1].primitiveOrNull() ?: "BP" }>"
+          is ModelType.AMB -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>, B: Pattern<${ members[1].primitiveOrNull() ?: "BP" }>" // No M is defined here because it is a concrete type in patLetters below
           is ModelType.None -> ""
         }
 
@@ -361,13 +394,15 @@ class DecomatProcessor(
       fun List<String>.commaSep() = joinToString(", ")
 
       // Generate: AP: Query, BP: Query
-      val patTypes = (eachLetter { "${it}P: ${this.className}" } + typeParams).commaSep()
+      val patTypes = (eachGenericLetter { "${it}P: ${this.className}" } + typeParams)
       // Generate: Pattern2<A, B, AP, BP, FlatMap>
-      val subClass = "Pattern${model.members.size}${mString}<${(patLetters + eachLetter { "${it}P" } + listOf(classUseSiteName)).commaSep()}>"
+      val subClass = "Pattern${model.members.size}${mString}<${(patLetters + eachTemplateParam { "${it}P" } + listOf(classUseSiteName)).commaSep()}>"
       // Generate: a: A, b: B
-      val classValsTypes = eachLetter { "${it.lowercase()}: $it" }.commaSep()
+      val functionsParamsTypes = eachLetter { "${it.lowercase()}: $it" }.commaSep()
+      // Generate: val a: A, val b: B
+      val classValsTypes = eachLetter { "val ${it.lowercase()}: $it" }.commaSep()
       // Generate: a, b
-      val classVals = eachLetter { it.lowercase() }.commaSep()
+      val classVals = eachLetter { "${it.lowercase()}" }.commaSep()
 
       val memberKeyValues =
         allMembers.map { "${it.field.name}: ${it.field.type.toString()}" }.commaSep()
@@ -386,21 +421,34 @@ class DecomatProcessor(
       val isExpression =
         if (!hasGenerics) """val ${companionName}.Companion.Is get() = Is<$classUseSiteName>()""" else ""
 
+      val fromHereFunction =
+        if (renderFromHereFunction) {
+          """
+            // A "Copy from Self" Helper function for ADTs that allows you to copy an element X from inside of a this@X
+            // e.g. if you have a data class FlatMap(val head: Query, val id: String, val body: Query)
+            // you can copy it from inside of a FlatMap (i.e. a this@FlatMap) like this: FlatMap.fromHere(head, id, body)
+            context(${model.parametrizedName}) fun ${genericBlock} ${companionName}.Companion.${fromHereFunctionName}(${memberKeyValues}) =
+              Copy${className}(${allMembers.map { it.fieldName }.commaSep()}).invoke(this@${className})
+          """.trimIndent()
+        } else ""
+
       writer.apply {
         // class FlatMap_M<A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query>(a: A, b: B): Pattern2<A, B, AP, BP, FlatMap>(a, b, Typed<FlatMap>())
         //operator fun <A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query> FlatMap.Companion.get(a: A, b: B) = FlatMap_M(a, b)
 
         // include the '            ' in joinToString below since that is the margin of the fileContent variable that needs to be in
         // front of everything, otherwise it won't be stripped properly
+        val generics = (listOf(pats) + patTypes).commaSep()
+
         val fileContent =
           """
             package $packageName
             
             ${model.imports.map { "import $it" }.joinToString("\n            ")}
             
-            class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
-            operator fun <$pats, $patTypes> ${companionName}.Companion.get($classValsTypes) = ${className}_M($classVals)
-            ${isExpression}             
+            data class ${className}_M<${generics}>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
+            operator fun <${generics}> ${companionName}.Companion.get($functionsParamsTypes) = ${className}_M($classVals)
+            val ${companionName}.Companion.Is get() = Is<$classStarProjectedName>()
           """.trimIndent()
 
         val adtFunctions =
@@ -414,12 +462,8 @@ class DecomatProcessor(
             // Typically in an ADT you have a lot of properties and only one or two define the actual structure of the object
             // this means that you want to explicitly state only the structural ADT properties and implicitly copy the rest.
             fun ${genericBlock} ${companionName}.Companion.${fromFunctionName}(${memberKeyValues}) = Copy${className}(${allMembers.map { it.fieldName }.commaSep()})
-              
-            // A "Copy from Self" Helper function for ADTs that allows you to copy an element X from inside of a this@X
-            // e.g. if you have a data class FlatMap(val head: Query, val id: String, val body: Query)
-            // you can copy it from inside of a FlatMap (i.e. a this@FlatMap) like this: FlatMap.fromHere(head, id, body)
-            context(${model.parametrizedName}) fun ${genericBlock} ${companionName}.Companion.${fromHereFunctionName}(${memberKeyValues}) =
-              Copy${className}(${allMembers.map { it.fieldName }.commaSep()}).invoke(this@${className})
+            
+            ${fromHereFunction}
               
             data class Id${className}${genericBlock}(${allMembers.map { "val ${it.fieldName}: ${it.className}" }.commaSep()})
               

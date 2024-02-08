@@ -4,7 +4,14 @@ on: [pull_request, push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            build_command: build
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -14,4 +21,4 @@ jobs:
           distribution: 'adopt'
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
-      - run: ./gradlew clean build test --stacktrace
+      - run: ./gradlew ${{ matrix.build_command }} -Pplatform=${{ matrix.platform }} --stacktrace -Pnosign -PisCI

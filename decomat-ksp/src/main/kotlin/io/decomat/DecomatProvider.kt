@@ -15,7 +15,9 @@ class DecomatProvider : SymbolProcessorProvider {
     val constructorComponentAnnotationName =
       environment.options.get("constructorComponentName") ?: "ConstructorComponent"
     val renderAdtFunctions =
-      environment.options.get("renderAdtFunctions")?.toBoolean() ?: true
+      environment.options.get("renderAdtFunctions")?.toBoolean() ?: false
+    val renderFromHereFunction =
+      renderAdtFunctions && (environment.options.get("renderFromHereFunction")?.toBoolean() ?: false)
     val fromHereFunctionName =
       environment.options.get("fromHereFunctionName") ?: "fromHere"
     val fromFunctionName =
@@ -28,6 +30,7 @@ class DecomatProvider : SymbolProcessorProvider {
       middleComponentAnnotationName,
       constructorComponentAnnotationName,
       renderAdtFunctions,
+      renderFromHereFunction,
       fromHereFunctionName,
       fromFunctionName
     )

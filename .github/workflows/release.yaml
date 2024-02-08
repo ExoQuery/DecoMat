@@ -4,39 +4,53 @@ on:
   workflow_dispatch
 
 jobs:
-#  build:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#      - name: Set up JDK 11
-#        uses: actions/setup-java@v3
-#        with:
-#          java-version: '11'
-#          distribution: 'adopt'
-#      - name: Validate Gradle wrapper
-#        uses: gradle/wrapper-validation-action@v1
-#      - run: ./gradlew clean build --stacktrace
+  create_staging_repository:
+    runs-on: ubuntu-latest
+    name: Create staging repository
+    outputs:
+      repository_id: ${{ steps.create.outputs.repository_id }}
+    steps:
+      - id: create
+        uses: nexus-actions/create-nexus-staging-repo@main
+        with:
+          username: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
+          password: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
+          staging_profile_id: ${{ secrets.SONATYPE_PROFILE_ID }}
+          # Defaults to the https://oss.sonatype.org, not https://s01.oss.sonatype.org
+          base_url: https://s01.oss.sonatype.org/service/local/
+          description: ${{ github.repository }}/${{ github.workflow }}#${{ github.run_number }}
 
-    release:
-      runs-on: ubuntu-latest
-#      if: success() && github.ref == 'refs/heads/github-release'
-#      needs: build
-      env:
-        ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
-        ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
-      steps:
-        - uses: actions/checkout@v3
-        - name: Set up JDK 11
-          uses: actions/setup-java@v3
-          with:
-            java-version: '11'
-            distribution: 'adopt'
-        - name: Validate Gradle wrapper
-          uses: gradle/wrapper-validation-action@v1
-        #After decoding the secret key, place the file in ~/.gradle/secring.gpg
-        - name: Decode
-          run: |
-            mkdir ~/.gradle
-            echo "${{secrets.SIGNING_KEY_RING_FILE}}" > ~/.gradle/secring.gpg.b64
-            base64 -d ~/.gradle/secring.gpg.b64 > ~/.gradle/secring.gpg
-        - run: ./gradlew clean build publishToSonatype -no-daemon --no-parallel -x test --stacktrace -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password='${{secrets.SIGNING_PASSWORD}}' -Psigning.secretKeyRingFile=$(echo ~/.gradle/secring.gpg)
+  release:
+    needs: [create_staging_repository]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        include:
+          - os: ubuntu-latest
+            # On ubuntu publish everything you can i.e. the linuxX64 and jvm binaries
+            publish_command: build publishAllPublicationsToOss
+            platform: linux
+          - os: macOS-latest
+            # publishTvosX64PublicationToOss publishTvosArm64PublicationToOss publishWatchosX64PublicationToOss publishWatchosArm32PublicationToOss publishWatchosArm64PublicationToOss
+            publish_command: build publishMacosX64PublicationToOss publishMacosArm64PublicationToOss publishIosX64PublicationToOss publishIosArm64PublicationToOss publishIosSimulatorArm64PublicationToOss
+            platform: mac
+          - os: windows-latest
+            publish_command: build publishMingwX64PublicationToOss
+            platform: windows
+    env:
+      SONATYPE_REPOSITORY_ID: ${{ needs.create_staging_repository.outputs.repository_id }}
+      SONATYPE_USERNAME: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
+      NEW_SIGNING_KEY_ID_BASE64: ${{ secrets.NEW_SIGNING_KEY_ID_BASE64 }}
+      NEW_SIGNING_KEY_ID_BASE64_PASS: ${{ secrets.NEW_SIGNING_KEY_ID_BASE64_PASS }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+      - run: ./gradlew ${{ matrix.publish_command }} -Pplatform=${{ matrix.platform }} -PisCI -no-daemon --stacktrace
