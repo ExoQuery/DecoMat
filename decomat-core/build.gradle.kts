@@ -105,12 +105,13 @@ kotlin {
 
     sourceSets {
         commonMain {
+            kotlin.srcDir("$buildDir/templates/")
             dependencies {
-                kotlin.srcDir("$buildDir/templates/")
             }
         }
 
         commonTest {
+            kotlin.srcDir("$buildDir/templates/")
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-common"))

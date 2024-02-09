@@ -87,14 +87,16 @@ kotlin {
   }
 
   sourceSets {
-    commonMain {
+    val commonMain by getting {
+      kotlin.srcDir("$buildDir/generated/ksp/metadata/commonMain/kotlin")
       dependencies {
-        kotlin.srcDir("$buildDir/generated/ksp/main/kotlin")
+        //kotlin.srcDir("$buildDir/generated/ksp/main/kotlin")
         api(project(":decomat-core"))
       }
     }
 
-    commonTest {
+    val commonTest by getting {
+      kotlin.srcDir("$buildDir/generated/ksp/metadata/commonMain/kotlin")
       dependencies {
         // Used to ad-hoc some examples but not needed.
         //api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.2")
@@ -109,7 +111,6 @@ kotlin {
 
 dependencies {
   add("kspCommonMainMetadata", project(":decomat-ksp"))
-
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
