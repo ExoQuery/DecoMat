@@ -116,7 +116,13 @@ dependencies {
   add("kspCommonMainMetadata", project(":decomat-ksp"))
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+  if (name != "kspCommonMainKotlinMetadata") {
+    dependsOn("kspCommonMainKotlinMetadata")
+  }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
   if (name != "kspCommonMainKotlinMetadata") {
     dependsOn("kspCommonMainKotlinMetadata")
   }
