@@ -122,6 +122,9 @@ subprojects {
         from(components["kotlin"])
         artifactId = varintName
 
+        artifact(tasks["javadocJar"])
+        artifact(tasks["sourcesJar"])
+
         pom {
           name.set("decomat")
           description.set("DecoMat - Deconstructive Pattern Matching for Kotlin")
