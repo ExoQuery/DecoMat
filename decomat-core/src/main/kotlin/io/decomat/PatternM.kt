@@ -25,7 +25,7 @@ abstract class Pattern2M<P1: Pattern<R1>, M, P2: Pattern<R2>, R1, R2, R>(val pat
       is HasProductClass<*> ->
         divideInto3ComponentsAny(instance.productComponents)
       is ProductClass2M<*, *, *, *> ->
-        if (!isType(instance.value, typeR.type)) fail("Invalid type of data")  // todo refine message
+        if (!typeR.typecheck(instance.value)) fail("Invalid type of data")  // todo refine message
         else divideInto3Components(instance as ProductClass<R>)
       else -> fail("Cannot divide $instance into components. It is not a Product2 class.")
     }
