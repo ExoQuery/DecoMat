@@ -225,8 +225,24 @@ class DecomatProcessor(
         val classFullNameListElem =
           annotationHolderClass.qualifiedName?.asString()?.let { listOf(it) } ?: listOf()
 
+        fun recurseGetArgs(type: KSType): List<KSType> =
+          type.arguments.flatMap { arg ->
+            arg.type?.resolve()?.let { argType ->
+              when (argType.declaration) {
+                is KSClassDeclaration -> listOf(argType) + recurseGetArgs(argType)
+                else -> listOf()
+              }
+            } ?: listOf()
+          }
+
         val additionalImports =
-          classFullNameListElem + members.mapNotNull { it.qualifiedClassName }
+          classFullNameListElem +
+            members.mapNotNull { it.qualifiedClassName } +
+            // When elements themselves have things that need to be imported e.g. `data class Something(val content: List<OtherStuff>)` make sure to import `OtherStuff`
+            members.flatMap {
+              recurseGetArgs(it.field.type).map { it.declaration.qualifiedName?.asString() }.filterNotNull()
+            }
+
 
         return GenModel(defaultImports + additionalImports.distinct(), members, annotationHolderClass, useStarProjection, productComponents)
       }
