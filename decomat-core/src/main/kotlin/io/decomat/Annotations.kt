@@ -2,7 +2,7 @@ package io.decomat
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)
-annotation class Matchable(val simplifyTypes: Boolean = true)
+annotation class Matchable(val simplifyTypes: Boolean = false)
 
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.VALUE_PARAMETER)

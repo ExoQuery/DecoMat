@@ -35,7 +35,7 @@ class QueryPatternTest {
       on(ent as Query<*>).match(
         case(NestedM[NestedM[Is<Entity<*>>()]])
           .then { ent -> wrongResult },
-        case(Nested[Is<Entity<*>>()])
+        case(Nested[Is<Entity<Int>>()])
           .then { ent -> ent }
       )
     assertEquals(Entity(123), out)

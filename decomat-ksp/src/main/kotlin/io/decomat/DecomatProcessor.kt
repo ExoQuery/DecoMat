@@ -82,7 +82,7 @@ class DecomatProcessor(
           when {
             sym is KSClassDeclaration && sym.classKind == ClassKind.CLASS -> {
               val useStarProjection =
-                sym.annotations.find { it.shortName.getShortName() == matchableAnnotationName }?.arguments?.get(0)?.value as? Boolean ?: true
+                sym.annotations.find { it.shortName.getShortName() == matchableAnnotationName }?.arguments?.get(0)?.value as? Boolean ?: false
 
               val componentElements = findComponents(sym)
               // Only actually allowed to have one of these but keep a list anyhow
@@ -168,17 +168,20 @@ class DecomatProcessor(
     val fullClassName = ksClass.qualifiedName?.asString()
     // since we are going to add components to the imports, use regular name for the use-site
     // also, we want star projections e.g. for FlatMap<T, R> use FlatMap<*, *>
+    val parametrizedName =
+      if (ksClass.typeParameters.isNotEmpty())
+      // Actually get the full projection of hte class e.g. Query<T> instead of Query<*>. Not sure how to actually get `Query<T>` as a string from a KSClassDeclaration
+        "${ksClass.simpleName.getShortName()}<${ksClass.typeParameters.map { it.name.getShortName() }.joinToString(", ")}>" //.asStarProjectedType().toString()
+      else
+      // Otherwise it's not a star-projection and we can use the plain class name
+        ksClass.toString()
 
     // using the logic above removes star projections but seems to be too strict logically
     val useSiteName =
       if (useStarProjection && ksClass.typeParameters.isNotEmpty())
         ksClass.asStarProjectedType().toString()
-      else if (ksClass.typeParameters.isNotEmpty())
-        // Actually get the full projection of hte class e.g. Query<T> instead of Query<*>. Not sure how to actually get `Query<T>` as a string from a KSClassDeclaration
-        "${ksClass.simpleName.getShortName()}<${ksClass.typeParameters.map { it.name.getShortName() }.joinToString(", ")}>" //.asStarProjectedType().toString()
       else
-        // Otherwise it's not a star-projection and we can use the plain class name
-        ksClass.toString()
+        parametrizedName
 
     fun toModelType(): ModelType =
       when {
@@ -189,18 +192,13 @@ class DecomatProcessor(
       }
 
     companion object {
-      fun fromClassAndMembers(ksClass: KSClassDeclaration, params: List<PropertyHolder>, useStarProjection: Boolean, productComponents: KSPropertyDeclaration?): GenModel {
-        fun parseRegularParam(param: PropertyHolder): Member {
+      fun fromClassAndMembers(annotationHolderClass: KSClassDeclaration, params: List<PropertyHolder>, useStarProjection: Boolean, productComponents: KSPropertyDeclaration?): GenModel {
+
+        fun parseRegularParam(param: PropertyHolder, ksClass: KSClassDeclaration): Member {
           val tpe = param.type
-          val decl = tpe.declaration
-          val typeParamNames = ksClass.typeParameters.map { it.qualifiedName }
 
           // if it is used as a type-parameter for the class, don't use it
-          val fullName =
-            if (typeParamNames.contains(decl.qualifiedName))
-              null
-            else
-              decl.qualifiedName?.asString()
+          val fullName = ksClass.qualifiedName?.asString()
 
           // for the parameters, if they have generic types you we want those to have starts e.g. Query<*> if it's Query<T>
           // NOTE: Removing `.starProjection()` makes type work (mostly) but seems to make matching too strict
@@ -212,18 +210,25 @@ class DecomatProcessor(
                 paramTpe.toString()
             }
 
-          return Member(name, fullName, param)
+          return Member(name, fullName, param, false)
         }
 
-        val members = params.map { parseRegularParam(it) }
+        val members = params.map {
+          val decl = it.type.declaration
+          when (decl) {
+            is KSClassDeclaration -> parseRegularParam(it, decl)
+            is KSTypeParameter -> Member(it.type.toString(), null, it, true)
+            else -> throw IllegalArgumentException("Unknown declaration type: ${decl}")
+          }
+        }
 
         val classFullNameListElem =
-          ksClass.qualifiedName?.asString()?.let { listOf(it) } ?: listOf()
+          annotationHolderClass.qualifiedName?.asString()?.let { listOf(it) } ?: listOf()
 
         val additionalImports =
           classFullNameListElem + members.mapNotNull { it.qualifiedClassName }
 
-        return GenModel(defaultImports + additionalImports.distinct(), members, ksClass, useStarProjection, productComponents)
+        return GenModel(defaultImports + additionalImports.distinct(), members, annotationHolderClass, useStarProjection, productComponents)
       }
 
       val defaultImports = listOf(
@@ -237,7 +242,7 @@ class DecomatProcessor(
 
     }
   }
-  data class Member(val className: String, val qualifiedClassName: String?, val field: PropertyHolder) {
+  data class Member(val className: String, val qualifiedClassName: String?, val field: PropertyHolder, val isGeneric: Boolean) {
     val fieldName = field.name
   }
 
@@ -281,7 +286,7 @@ class DecomatProcessor(
 
     file.bufferedWriter().use { writer ->
       fun eachLetter(f: Member.(String) -> String) =
-        model.members.withIndex().map { (num, member) ->
+        model.members.filter { it.field.isRegularComponent() }.withIndex().map { (num, member) ->
           val letter = ('a' + num).uppercase()
           f(member, letter)
         }
@@ -289,14 +294,18 @@ class DecomatProcessor(
       val memberParams = model.members.map { it.className }
 
       val typeParams =
-        model.ksClass.typeParameters
-          // only use top-level parameters defined in our classes since we are star-projecting everything inside
-          // e.g. if our class is FlatMap<Query<T>, Query<R>> we don't want to include the T and R, in the parameters
-          // list because the match will actually be done on FlatMap<Query<*>, Query<*>> and the `operator function get`
-          // that returns FlatMap_M won't know what these parameters are requiring them to be specified explicitly.
-          // On the other hand, if it's a top-level like Entity<T> then we should include it.
-          .filter { memberParams.contains(it.name.getShortName()) }
-          .mapNotNull { it.name.asString() }
+        if (model.useStarProjection) {
+          model.ksClass.typeParameters
+            // only use top-level parameters defined in our classes since we are star-projecting everything inside
+            // e.g. if our class is FlatMap<Query<T>, Query<R>> we don't want to include the T and R, in the parameters
+            // list because the match will actually be done on FlatMap<Query<*>, Query<*>> and the `operator function get`
+            // that returns FlatMap_M won't know what these parameters are requiring them to be specified explicitly.
+            // On the other hand, if it's a top-level like Entity<T> then we should include it.
+            .filter { memberParams.contains(it.name.getShortName()) }
+            .mapNotNull { it.name.asString() }
+        } else {
+          model.ksClass.typeParameters.map { it.name.getShortName() }
+        }
 
       //logger.warn("---------- Type Params: ${typeParams}")
 
@@ -343,6 +352,20 @@ class DecomatProcessor(
       val memberKeyValues =
         model.members.map { "${it.field.name}: ${it.field.type.toString()}" }.commaSep()
 
+
+      val (genericBlock, hasGenerics) = run {
+        val genericFieldParams = members.filter { it.isGeneric }.map { it.qualifiedClassName ?: it.className }
+        val genericClassParams = model.ksClass.typeParameters.map { it.toString() }
+        val genericParams = (genericFieldParams + genericClassParams).distinct()
+        val hasGenerics = genericParams.isNotEmpty()
+        val genericBlock =
+          if (hasGenerics) "<${genericParams.commaSep()}>" else ""
+        genericBlock to hasGenerics
+      }
+
+      val isExpression =
+        if (!hasGenerics) """val ${companionName}.Companion.Is get() = Is<$classUseSiteName>()""" else ""
+
       writer.apply {
         // class FlatMap_M<A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query>(a: A, b: B): Pattern2<A, B, AP, BP, FlatMap>(a, b, Typed<FlatMap>())
         //operator fun <A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query> FlatMap.Companion.get(a: A, b: B) = FlatMap_M(a, b)
@@ -353,14 +376,18 @@ class DecomatProcessor(
           """
             package $packageName
             
+            // Middle: Component ${if (modelType is ModelType.AMB) modelType.m.field.type.toString() else ""}
+            // Middle Members: ${model.middleMembers.map { it.field.type.toString() }}
+            // Middle Members [0]: ${if (model.middleMembers.size > 0) model.middleMembers[0].field.type.toString() else "<none>"}
+            
             ${model.imports.map { "import $it" }.joinToString("\n            ")}
             
             class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
             operator fun <$pats, $patTypes> ${companionName}.Companion.get($classValsTypes) = ${className}_M($classVals)
-            val ${companionName}.Companion.Is get() = Is<$classUseSiteName>()
+            ${isExpression}
             
             @JvmInline
-            value class Copy${className}(val original: ${className}) {
+            value class Copy${className}${genericBlock}(val original: ${model.parametrizedName}) {
               operator fun invoke(${model.members.map { "${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) =
                 if (${members.map {"original.${it.fieldName} == ${it.fieldName}"}.joinToString(" && ")})
                   original
@@ -368,9 +395,9 @@ class DecomatProcessor(
                   original.copy(${members.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})  
             }
             
-            fun ${companionName}.Companion.from(original: ${className}) = Copy${className}(original)
+            fun ${genericBlock} ${companionName}.Companion.from(original: ${model.parametrizedName}) = Copy${className}(original)
               
-            context(${className}) fun ${companionName}.Companion.fromHere(${memberKeyValues}) =
+            context(${model.parametrizedName}) fun ${genericBlock} ${companionName}.Companion.fromHere(${memberKeyValues}) =
               Copy${className}(this@${className}).invoke(${members.map { it.fieldName }.commaSep()})
               
              

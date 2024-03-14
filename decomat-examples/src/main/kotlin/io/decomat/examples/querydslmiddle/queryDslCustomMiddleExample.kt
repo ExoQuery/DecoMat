@@ -11,7 +11,7 @@ data class Nested<T>(@Component val body: Query<T>): Query<T>, HasProductClass<N
   }
 }
 
-@Matchable
+@Matchable(true)
 data class FlatMap<T, R>(
   @Component val head: Query<T>,
   @MiddleComponent val id: String,
