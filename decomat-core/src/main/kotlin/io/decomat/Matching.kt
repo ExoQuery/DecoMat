@@ -12,6 +12,9 @@ internal fun <C> wrapNonComps(a: kotlin.Any?) =
 
 
 
+fun <M, O> M.matchDirect(vararg cases: Case<O, Any>): O? =
+  cases.find { theCase -> theCase.matches(this as Any) }?.eval(this as Any)
+
 fun <M> on(value: M): DoMatch<M> = DoMatch(value)
 
 // TODO Have an else-clause

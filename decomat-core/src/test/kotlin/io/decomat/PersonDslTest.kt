@@ -25,6 +25,15 @@ class PersonDslTest: DecomatTest {
 
   @Test
   fun `Person(Name(== "Joe", == "Bloggs" not "Roggs"))`() {
+    Person(Name("Joe", "Bloggs"), 123).matchDirect(
+      case(Person[Name[Is {it == "Joe"}, Is {it == "Roggs"}]])
+        .then { name -> wrongAnswer },
+      case(Person[Name[Is(), Is {it == "Roggs"}]])
+        .then { name -> wrongAnswer },
+      case(Person[Name[Is {it == "Joe"}, Is {it == "Bloggs"}]])
+        .then { (first, last) -> Res2(first, last) }
+    )
+
     val result =
       on(Person(Name("Joe", "Bloggs"), 123)).match(
         case(Person[Name[Is {it == "Joe"}, Is {it == "Roggs"}]])

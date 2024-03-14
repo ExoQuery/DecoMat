@@ -10,7 +10,8 @@ class DecomatProcessor(
   val codeGenerator: CodeGenerator,
   val matchableAnnotationName: String,
   val componentAnnotationName: String,
-  val middleComponentAnnotationName: String
+  val middleComponentAnnotationName: String,
+  val constructorComponentAnnotationName: String
 ) : SymbolProcessor {
 
   private val Fail = object {
@@ -19,27 +20,61 @@ class DecomatProcessor(
     fun PropertyHasNoName(symbol: KSValueParameter, annotName: String) = logger.error("The property ${symbol} has no name. It must have a name to be annotated with @${annotName}.", symbol)
   }
 
-  data class PropertyHolder(val name: String, val type: KSType)
+  data class PropertyHolder(val name: String, val type: KSType, val fieldType: Type, val componentType: ComponentType, val annotationName: String) {
+    sealed interface Type {
+      object Constructor: Type
+      object Member: Type
+    }
+    sealed interface ComponentType {
+      object Component: ComponentType
+      object MiddleComponent: ComponentType
+      object ConstructorComponent: ComponentType
+    }
+    fun isRegularComponent() = componentType == ComponentType.Component
+    fun isMiddleComponent() = componentType == ComponentType.MiddleComponent
+    fun isConstructorComponent() = componentType == ComponentType.ConstructorComponent
+  }
 
   override fun process(resolver: Resolver): List<KSAnnotated> {
     val symbols = resolver.getSymbolsWithAnnotation("io.decomat.Matchable")
 
-    fun findComponents(sym: KSClassDeclaration, annotName: String) =
-      (sym.primaryConstructor?.parameters?.filter {
-        val hasAnnotation = it.annotations.any { annot -> annot.shortName.getShortName() == annotName }
-        if (hasAnnotation && !it.isVal) Fail.CannotAnnotateParameter(it, annotName)
-        hasAnnotation
-      } ?: emptyList()).map {
-        fun noName() = Fail.PropertyHasNoName(it, annotName).let { "<???>" }
-        PropertyHolder(it.name?.getShortName() ?: noName(), it.type.resolve())
-      } +
-      (sym.getAllProperties().filter {
-        val hasAnnotation = it.annotations.any { annot -> annot.shortName.getShortName() == annotName }
-        if (hasAnnotation && it.isMutable) Fail.CannotAnnotateMutableParameter(it, annotName)
-        hasAnnotation
-      }).map { PropertyHolder(it.simpleName.getShortName(), it.type.resolve()) }
+    fun findComponents(sym: KSClassDeclaration): List<PropertyHolder> {
+      val possibleAnnotations: List<String> = listOf(componentAnnotationName, middleComponentAnnotationName, constructorComponentAnnotationName)
+      fun Sequence<KSAnnotation>.findAnnotations(): KSAnnotation? {
+        val foundAnnots = filter { annot -> possibleAnnotations.contains(annot.shortName.getShortName()) }.toList()
+        if (foundAnnots.size > 1) {
+          logger.error("The symbol $sym has more than one @${possibleAnnotations} annotation. Only one is allowed.")
+        }
+        return foundAnnots.firstOrNull()
+      }
+      fun KSValueParameter.assertIsVal(): Unit = if (!isVal) Fail.CannotAnnotateMutableParameter(this, possibleAnnotations.toString()) else Unit
+      fun KSValueParameter.assertHasName(): String = Fail.PropertyHasNoName(this, possibleAnnotations.toString()).let { "<???>" }
+      fun KSPropertyDeclaration.assertNotMutable(): Unit = if (isMutable) Fail.CannotAnnotateMutableParameter(this, possibleAnnotations.toString()) else Unit
+      fun componentType(annot: KSAnnotation) =
+        when (annot.shortName.getShortName()) {
+          componentAnnotationName -> PropertyHolder.ComponentType.Component
+          middleComponentAnnotationName -> PropertyHolder.ComponentType.MiddleComponent
+          constructorComponentAnnotationName -> PropertyHolder.ComponentType.ConstructorComponent
+          else -> throw IllegalArgumentException("Unknown component type: ${annot.shortName.getShortName()}")
+        }
 
-    data class ComponentsToGen(val sym: KSClassDeclaration, val componentElements: List<PropertyHolder>, val middleElements: List<PropertyHolder>, val useStarProjection: Boolean, val productComponents: KSPropertyDeclaration?)
+      return (sym.primaryConstructor?.parameters?.mapNotNull { param ->
+        val foundAnnot = param.annotations.findAnnotations()
+        if (foundAnnot != null) param.assertIsVal()
+        foundAnnot?.let { it to param }
+      } ?: emptyList()).map { (foundAnnot, param) ->
+        PropertyHolder(param.name?.getShortName() ?: param.assertHasName(), param.type.resolve(), PropertyHolder.Type.Constructor, componentType(foundAnnot), foundAnnot.shortName.getShortName())
+      } +
+      (sym.getAllProperties().mapNotNull { prop ->
+        val foundAnnot = prop.annotations.findAnnotations()
+        prop.assertNotMutable()
+        foundAnnot?.let { it to prop }
+      }).map { (foundAnnot, prop) ->
+        PropertyHolder(prop.simpleName.getShortName(), prop.type.resolve(), PropertyHolder.Type.Member, componentType(foundAnnot), foundAnnot.shortName.getShortName())
+      }
+    }
+
+    data class ComponentsToGen(val sym: KSClassDeclaration, val componentElements: List<PropertyHolder>, val useStarProjection: Boolean, val productComponents: KSPropertyDeclaration?)
 
     val componentsToGen =
       symbols
@@ -49,9 +84,8 @@ class DecomatProcessor(
               val useStarProjection =
                 sym.annotations.find { it.shortName.getShortName() == matchableAnnotationName }?.arguments?.get(0)?.value as? Boolean ?: true
 
-              val componentElements = findComponents(sym, componentAnnotationName)
+              val componentElements = findComponents(sym)
               // Only actually allowed to have one of these but keep a list anyhow
-              val middleElements = findComponents(sym, middleComponentAnnotationName)
 
               if (componentElements.isEmpty()) {
                 logger.error("No @Component parameters found in the primary constructor of the class $sym (They must be the annotation @${matchableAnnotationName})")
@@ -87,7 +121,7 @@ class DecomatProcessor(
                   }
                 """.trimIndent())
               }
-              ComponentsToGen(sym, componentElements, middleElements, useStarProjection, productComponents)
+              ComponentsToGen(sym, componentElements, useStarProjection, productComponents)
             }
             else ->
               null
@@ -101,16 +135,18 @@ class DecomatProcessor(
       logger.warn("Found the following classes/components with the @Matchable/@Component annotations: ${description}")
     }
 
-    componentsToGen.forEach { (cls, members, middleMembers, useStarProjection, productComponents) ->
+    componentsToGen.forEach { (cls, members, useStarProjection, productComponents) ->
+      val middleMembers = members.filter { it.isMiddleComponent() }
       if (middleMembers.size > 1) {
         logger.error("The Matchable class ${cls.simpleName.asString()} has more than one @${middleComponentAnnotationName} components (i.e. ${members.size}). No more than 1 is supported so far.")
       }
 
-      if (members.size > 2) {
+      val patternMatchMembers = members.filter { it.isRegularComponent() }
+      if (patternMatchMembers.size > 2) {
         logger.error("The Matchable class ${cls.simpleName.asString()} has more than two @${componentAnnotationName} components (i.e. ${members.size}). No more than 2 are supported so far.")
       }
 
-      generateExtensionFunction(GenModel.fromClassAndMembers(cls, members, middleMembers, useStarProjection, productComponents))
+      generateExtensionFunction(GenModel.fromClassAndMembers(cls, members, useStarProjection, productComponents))
     }
 
     return listOf()
@@ -123,7 +159,10 @@ class DecomatProcessor(
     object None: ModelType
   }
 
-  data class GenModel private constructor(val imports: List<String>, val members: List<Member>, val middleMembers: List<Member>, val ksClass: KSClassDeclaration, val useStarProjection: Boolean, val productComponents: KSPropertyDeclaration?) {
+  data class GenModel private constructor(val imports: List<String>, val allMembers: List<Member>, val ksClass: KSClassDeclaration, val useStarProjection: Boolean, val productComponents: KSPropertyDeclaration?) {
+    val members = allMembers.filter { it.field.isRegularComponent() }
+    val middleMembers = allMembers.filter { it.field.isMiddleComponent() }
+
     val packageName = ksClass.packageName.asString()
     val className = ksClass.simpleName.asString()
     val fullClassName = ksClass.qualifiedName?.asString()
@@ -150,7 +189,7 @@ class DecomatProcessor(
       }
 
     companion object {
-      fun fromClassAndMembers(ksClass: KSClassDeclaration, regularParams: List<PropertyHolder>, middleParams: List<PropertyHolder>, useStarProjection: Boolean, productComponents: KSPropertyDeclaration?): GenModel {
+      fun fromClassAndMembers(ksClass: KSClassDeclaration, params: List<PropertyHolder>, useStarProjection: Boolean, productComponents: KSPropertyDeclaration?): GenModel {
         fun parseRegularParam(param: PropertyHolder): Member {
           val tpe = param.type
           val decl = tpe.declaration
@@ -176,8 +215,7 @@ class DecomatProcessor(
           return Member(name, fullName, param)
         }
 
-        val members = regularParams.map { parseRegularParam(it) }
-        val middleMembers = middleParams.map { parseRegularParam(it) }
+        val members = params.map { parseRegularParam(it) }
 
         val classFullNameListElem =
           ksClass.qualifiedName?.asString()?.let { listOf(it) } ?: listOf()
@@ -185,7 +223,7 @@ class DecomatProcessor(
         val additionalImports =
           classFullNameListElem + members.mapNotNull { it.qualifiedClassName }
 
-        return GenModel(defaultImports + additionalImports.distinct(), members, middleMembers, ksClass, useStarProjection, productComponents)
+        return GenModel(defaultImports + additionalImports.distinct(), members, ksClass, useStarProjection, productComponents)
       }
 
       val defaultImports = listOf(
@@ -199,7 +237,9 @@ class DecomatProcessor(
 
     }
   }
-  data class Member(val className: String, val qualifiedClassName: String?, val field: PropertyHolder)
+  data class Member(val className: String, val qualifiedClassName: String?, val field: PropertyHolder) {
+    val fieldName = field.name
+  }
 
   /**
    * Based on the number of @Component/@MiddleComponent parameters, validate that the productComponents property is of the correct type
@@ -229,6 +269,7 @@ class DecomatProcessor(
     val className = model.className
     val classUseSiteName = model.useSiteName
     val companionName = model.className
+    val members = model.members
 
     val modelType = model.toModelType()
 
@@ -299,6 +340,8 @@ class DecomatProcessor(
       // Generate: a, b
       val classVals = eachLetter { it.lowercase() }.commaSep()
 
+      val memberKeyValues =
+        model.members.map { "${it.field.name}: ${it.field.type.toString()}" }.commaSep()
 
       writer.apply {
         // class FlatMap_M<A: Pattern<AP>, B: Pattern<BP>, AP: Query, BP: Query>(a: A, b: B): Pattern2<A, B, AP, BP, FlatMap>(a, b, Typed<FlatMap>())
@@ -315,6 +358,21 @@ class DecomatProcessor(
             class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
             operator fun <$pats, $patTypes> ${companionName}.Companion.get($classValsTypes) = ${className}_M($classVals)
             val ${companionName}.Companion.Is get() = Is<$classUseSiteName>()
+            
+            @JvmInline
+            value class Copy${className}(val original: ${className}) {
+              operator fun invoke(${model.members.map { "${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) =
+                if (${members.map {"original.${it.fieldName} == ${it.fieldName}"}.joinToString(" && ")})
+                  original
+                else
+                  original.copy(${members.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})  
+            }
+            
+            fun ${companionName}.Companion.from(original: ${className}) = Copy${className}(original)
+              
+            context(${className}) fun ${companionName}.Companion.fromHere(${memberKeyValues}) =
+              Copy${className}(this@${className}).invoke(${members.map { it.fieldName }.commaSep()})
+              
              
           """.trimIndent()
 
