@@ -11,7 +11,10 @@ class DecomatProcessor(
   val matchableAnnotationName: String,
   val componentAnnotationName: String,
   val middleComponentAnnotationName: String,
-  val constructorComponentAnnotationName: String
+  val constructorComponentAnnotationName: String,
+  val renderAdtFunctions: Boolean,
+  val fromHereFunctionName: String,
+  val fromFunctionName: String
 ) : SymbolProcessor {
 
   private val Fail = object {
@@ -291,6 +294,7 @@ class DecomatProcessor(
     val classUseSiteName = model.useSiteName
     val companionName = model.className
     val members = model.members
+    val allMembers = model.allMembers
 
     val modelType = model.toModelType()
 
@@ -366,13 +370,13 @@ class DecomatProcessor(
       val classVals = eachLetter { it.lowercase() }.commaSep()
 
       val memberKeyValues =
-        model.members.map { "${it.field.name}: ${it.field.type.toString()}" }.commaSep()
+        allMembers.map { "${it.field.name}: ${it.field.type.toString()}" }.commaSep()
 
 
       val (genericBlock, hasGenerics) = run {
-        val genericFieldParams = members.filter { it.isGeneric }.map { it.qualifiedClassName ?: it.className }
+        //val genericFieldParams = allMembers.filter { it.isGeneric }.map { it.qualifiedClassName ?: it.className }
         val genericClassParams = model.ksClass.typeParameters.map { it.toString() }
-        val genericParams = (genericFieldParams + genericClassParams).distinct()
+        val genericParams = genericClassParams
         val hasGenerics = genericParams.isNotEmpty()
         val genericBlock =
           if (hasGenerics) "<${genericParams.commaSep()}>" else ""
@@ -392,34 +396,45 @@ class DecomatProcessor(
           """
             package $packageName
             
-            // Middle: Component ${if (modelType is ModelType.AMB) modelType.m.field.type.toString() else ""}
-            // Middle Members: ${model.middleMembers.map { it.field.type.toString() }}
-            // Middle Members [0]: ${if (model.middleMembers.size > 0) model.middleMembers[0].field.type.toString() else "<none>"}
-            
             ${model.imports.map { "import $it" }.joinToString("\n            ")}
             
             class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
             operator fun <$pats, $patTypes> ${companionName}.Companion.get($classValsTypes) = ${className}_M($classVals)
-            ${isExpression}
-            
-            @JvmInline
-            value class Copy${className}${genericBlock}(val original: ${model.parametrizedName}) {
-              operator fun invoke(${model.members.map { "${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) =
-                if (${members.map {"original.${it.fieldName} == ${it.fieldName}"}.joinToString(" && ")})
-                  original
-                else
-                  original.copy(${members.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})  
-            }
-            
-            fun ${genericBlock} ${companionName}.Companion.from(original: ${model.parametrizedName}) = Copy${className}(original)
-              
-            context(${model.parametrizedName}) fun ${genericBlock} ${companionName}.Companion.fromHere(${memberKeyValues}) =
-              Copy${className}(this@${className}).invoke(${members.map { it.fieldName }.commaSep()})
-              
-             
+            ${isExpression}             
           """.trimIndent()
 
-        write(fileContent)
+        val adtFunctions =
+          """
+            @JvmInline
+            value class Copy${className}${genericBlock}(val original: ${model.parametrizedName}) {
+              operator fun invoke(${allMembers.map { "${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) =
+                if (${allMembers.map {"original.${it.fieldName} == ${it.fieldName}"}.joinToString(" && ")})
+                  original
+                else
+                  original.copy(${allMembers.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})  
+            }
+            
+            // Helper function for ADTs that allows you to easily copy the element mentioning only the properties you care about
+            // Typically in an ADT you have a lot of properties and only one or two define the actual structure of the object
+            // this means that you want to explicitly state only the structural ADT properties and implicitly copy the rest.
+            fun ${genericBlock} ${companionName}.Companion.${fromFunctionName}(original: ${model.parametrizedName}) = Copy${className}(original)
+              
+            // A "Copy from Self" Helper function for ADTs that allows you to copy an element X from inside of a this@X
+            // e.g. if you have a data class FlatMap(val head: Query, val id: String, val body: Query)
+            // you can copy it from inside of a FlatMap (i.e. a this@FlatMap) like this: FlatMap.fromHere(head, id, body)
+            context(${model.parametrizedName}) fun ${genericBlock} ${companionName}.Companion.${fromHereFunctionName}(${memberKeyValues}) =
+              Copy${className}(this@${className}).invoke(${allMembers.map { it.fieldName }.commaSep()})
+              
+            data class Id${className}${genericBlock}(${allMembers.map { "val ${it.fieldName}: ${it.className}" }.commaSep()})
+              
+            // A helper function that creates a ADT-identifier from the structural properties of the ADT.
+            // Typically in an ADT you have a lot of properties and only one or two define the actual structure of the object
+            // and those are the only ones on which you want the `equals` and `hashCode` to be based.
+            fun ${genericBlock} ${companionName}${genericBlock}.id() =
+              Id${className}${genericBlock}(${allMembers.map { "this.${it.fieldName}" }.commaSep()})
+          """.trimIndent()
+
+        write(fileContent + if (renderAdtFunctions) "\n" + adtFunctions else "")
       }
     }
   }
