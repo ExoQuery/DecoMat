@@ -36,6 +36,12 @@ public class ThenTest: DecomatTest {
     )
 
   @Test
+  fun `Then1 - distinct(distinct(Is)) - thenThis`() = //
+    assert(
+      case(Distinct_M(Distinct_M(Is<Entity>()))).thenThis { _ -> Res1(compA) }.eval(Distinct(Distinct(foo))) == Res1(Distinct(foo))
+    )
+
+  @Test
   fun `Then2 - distinct(flatMap(Is, Is))`() =
     assert(
       case(Distinct_M(FlatMap_M(Is(), Is()))).then { (a, b) -> Res2(a, b) }.eval(Distinct(FlatMap(foo, bar))) == Res2(foo, bar)

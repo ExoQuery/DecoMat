@@ -20,7 +20,7 @@ import java.nio.charset.Charset
 
 plugins {
     kotlin("jvm")
-    //id("com.google.devtools.ksp") version "1.8.20"
+    //id("com.google.devtools.ksp") version "2.0.0-Beta4"
     id("maven-publish")
     idea
     // TODO Needed for the freemarker dependencies despite the fact that freemarker is imported
@@ -31,6 +31,8 @@ plugins {
 }
 
 sourceSets["main"].kotlin.srcDir(file("build/templates"))
+
+
 
 /*
 Note that the error "could not list directory ...git/DecoMat/decomat-core/src/templates
@@ -126,6 +128,13 @@ val runFreemarkerTemplate by tasks.registering {
 
 tasks.withType<KotlinCompile> {
     dependsOn(runFreemarkerTemplate)
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        freeCompilerArgs = listOf("-Xcontext-receivers")
+    }
 }
 
 class OutputDirective : TemplateDirectiveModel {
