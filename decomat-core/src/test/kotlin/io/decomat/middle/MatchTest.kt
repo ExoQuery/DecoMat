@@ -74,6 +74,14 @@ class MatchTest {
   }
 
   @Test
+  fun `flatMap(Map(?), Map(?)) - comps`() {
+    on(FlatMap(Map(foo, idA, bar), idB, Map(baz, idC, waz))).match(
+      case(FlatMap[Map[Is(), Is(kaz)], Map[Is(), Is(kaz)]]).then { a, m, b -> fail() },
+      case(FlatMap[Map[Is(), Is()], Map[Is(), Is()]]).then { (a1, am, a2), m, (b1, bm, b2) -> Res3(compLeft, compRight, comp) }
+    ) shouldBe Res3(Map(foo, idA, bar), Map(baz, idC, waz), FlatMap(Map(foo, idA, bar), idB, Map(baz, idC, waz)))
+  }
+
+  @Test
   fun `flatMap(?, Map(Map))`() {
     on(FlatMap(foo, idA, Map(bar, idB, baz))).match(
       case(FlatMap[Is(), Map[Is(), Is(waz)]]).then { a, m, b -> fail() },
