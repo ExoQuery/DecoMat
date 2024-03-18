@@ -36,7 +36,7 @@ public class ThenTest: DecomatTest {
     )
 
   @Test
-  fun `Then1 - distinct(distinct(Is)) - thenThis`() =
+  fun `Then1 - distinct(distinct(Is)) - comps`() =
     assert(
       case(Distinct_M(Distinct_M(Is<Entity>()))).then { _ -> Res1(compInner) }.eval(Distinct(Distinct(foo))) == Res1(Distinct(foo)) // conv
     )
@@ -102,15 +102,33 @@ public class ThenTest: DecomatTest {
     )
 
   @Test
+  fun `Then01 - flatMap(Is, Distinct) - compRight`() =
+    assert(
+      case(FlatMap_M(Is(), Distinct_M(Is()))).then { a, (b) -> Res2(comp, compRight) }.eval(FlatMap(foo, Distinct(bar))) == Res2(FlatMap(foo, Distinct(bar)), Distinct(bar))
+    )
+
+  @Test
   fun `Then02 - flatMap(Is, Map)`() =
     assert(
       case(FlatMap_M(Is(), Map_M(Is(), Is()))).then { a, (b1, b2) -> Res3(a, b1, b2) }.eval(FlatMap(foo, Map(bar, baz))) == Res3(foo, bar, baz)
     )
 
   @Test
+  fun `Then02 - flatMap(Is, Map) - comp`() =
+    assert(
+      case(FlatMap_M(Is(), Map_M(Is(), Is()))).then { a, (b1, b2) -> Res2(comp, compRight) }.eval(FlatMap(foo, Map(bar, baz))) == Res2(FlatMap(foo, Map(bar, baz)), Map(bar, baz))
+    )
+
+  @Test
   fun `Then10 - flatMap(Distinct, Is)`() =
     assert(
       case(FlatMap_M(Distinct_M(Is()), Is())).then { (a), b -> Res2(a, b) }.eval(FlatMap(Distinct(foo), bar)) == Res2(foo, bar)
+    )
+
+  @Test
+  fun `Then10 - flatMap(Distinct, Is) - compLeft`() =
+    assert(
+      case(FlatMap_M(Distinct_M(Is()), Is())).then { (a), b -> Res2(compLeft, comp) }.eval(FlatMap(Distinct(foo), bar)) == Res2(Distinct(foo), FlatMap(Distinct(foo), bar))
     )
 
   @Test
@@ -132,6 +150,12 @@ public class ThenTest: DecomatTest {
     )
 
   @Test
+  fun `Then20 - flatMap(Map, Is) - compLeft`() =
+    assert(
+      case(FlatMap_M(Map_M(Is(), Is()), Is())).then { (a1, a2), b -> Res2(compLeft, comp) }.eval(FlatMap(Map(foo, bar), baz)) == Res2(Map(foo, bar), FlatMap(Map(foo, bar), baz))
+    )
+
+  @Test
   fun `Then21 - flatMap(Map, Distinct)`() =
     assert(
       case(FlatMap_M(Map_M(Is(), Is()), Distinct_M(Is()))).then { (a1, a2), (b) -> Res3(a1, a2, b) }.eval(FlatMap(Map(foo, bar), Distinct(baz))) == Res3(foo, bar, baz)
@@ -141,5 +165,11 @@ public class ThenTest: DecomatTest {
   fun `Then22 - flatMap(Map, Map)`() =
     assert(
       case(FlatMap_M(Map_M(Is(), Is()), Map_M(Is(), Is()))).then { (a1, a2), (b1, b2) -> Res4(a1, a2, b1, b2) }.eval(FlatMap(Map(foo, bar), Map(baz, waz))) == Res4(foo, bar, baz, waz)
+    )
+
+  @Test
+  fun `Then22 - flatMap(Map, Map) - comp`() =
+    assert(
+      case(FlatMap_M(Map_M(Is(), Is()), Map_M(Is(), Is()))).then { (a1, a2), (b1, b2) -> Res3(compLeft, compRight, comp) }.eval(FlatMap(Map(foo, bar), Map(baz, waz))) == Res3(Map(foo, bar), Map(baz, waz), FlatMap(Map(foo, bar), Map(baz, waz)))
     )
 }
