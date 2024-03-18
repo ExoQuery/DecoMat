@@ -405,9 +405,8 @@ class DecomatProcessor(
 
         val adtFunctions =
           """
-            @JvmInline
-            value class Copy${className}${genericBlock}(val original: ${model.parametrizedName}) {
-              operator fun invoke(${allMembers.map { "${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) =
+            class Copy${className}${genericBlock}(${allMembers.map { "val ${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) {
+              operator fun invoke(original: ${model.parametrizedName}) =
                 if (${allMembers.map {"original.${it.fieldName} == ${it.fieldName}"}.joinToString(" && ")})
                   original
                 else
@@ -417,13 +416,13 @@ class DecomatProcessor(
             // Helper function for ADTs that allows you to easily copy the element mentioning only the properties you care about
             // Typically in an ADT you have a lot of properties and only one or two define the actual structure of the object
             // this means that you want to explicitly state only the structural ADT properties and implicitly copy the rest.
-            fun ${genericBlock} ${companionName}.Companion.${fromFunctionName}(original: ${model.parametrizedName}) = Copy${className}(original)
+            fun ${genericBlock} ${companionName}.Companion.${fromFunctionName}(${memberKeyValues}) = Copy${className}(${allMembers.map { it.fieldName }.commaSep()})
               
             // A "Copy from Self" Helper function for ADTs that allows you to copy an element X from inside of a this@X
             // e.g. if you have a data class FlatMap(val head: Query, val id: String, val body: Query)
             // you can copy it from inside of a FlatMap (i.e. a this@FlatMap) like this: FlatMap.fromHere(head, id, body)
             context(${model.parametrizedName}) fun ${genericBlock} ${companionName}.Companion.${fromHereFunctionName}(${memberKeyValues}) =
-              Copy${className}(this@${className}).invoke(${allMembers.map { it.fieldName }.commaSep()})
+              Copy${className}(${allMembers.map { it.fieldName }.commaSep()}).invoke(this@${className})
               
             data class Id${className}${genericBlock}(${allMembers.map { "val ${it.fieldName}: ${it.className}" }.commaSep()})
               
