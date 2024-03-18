@@ -20,7 +20,6 @@ import java.nio.charset.Charset
 
 plugins {
     kotlin("jvm")
-    //id("com.google.devtools.ksp") version "2.0.0-Beta4"
     id("maven-publish")
     idea
     // TODO Needed for the freemarker dependencies despite the fact that freemarker is imported

@@ -24,7 +24,7 @@ apply(plugin = "io.github.gradle-nexus.publish-plugin")
 allprojects {
 
   group = "io.exoquery"
-  version = "0.1.29"
+  version = "0.1.210"
 
   apply(plugin = "kotlin")
   apply(plugin = "maven-publish")
