@@ -1,14 +1,7 @@
 package io.decomat
 
-import java.util.WeakHashMap
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
-
 sealed interface ProductClass<out T> {
-  val value: T
+  val productClassValue: T
   fun isIfHas() =
     when(val thisComp = this) {
       is HasProductClass<T> -> thisComp.productComponents
@@ -55,7 +48,7 @@ sealed interface ProductClass<out T> {
 
 interface HasProductClass<T>: ProductClass<T> {
   val productComponents: ProductClass<T>
-  override val value get() = productComponents.value
+  override val productClassValue get() = productComponents.productClassValue
 }
 
 fun <T> productComponentsOf(host: T) = ProductClass0(host)
@@ -63,13 +56,13 @@ fun <T, A> productComponentsOf(host: T, componentA: A) = ProductClass1(host, com
 fun <T, A, B> productComponentsOf(host: T, componentA: A, componentB: B) = ProductClass2(host, componentA, componentB)
 fun <T, A, M, B> productComponentsOf(host: T, componentA: A, componentM: M, componentB: B) = ProductClass2M(host, componentA, componentM, componentB)
 
-data class ProductClass0<T>(override val value: T): ProductClass<T>
-data class ProductClass1<T, A>(override val value: T, val a: A): ProductClass<T>
-data class ProductClass2<T, A, B>(override val value: T, val a: A, val b: B): ProductClass<T> {
+data class ProductClass0<T>(override val productClassValue: T): ProductClass<T>
+data class ProductClass1<T, A>(override val productClassValue: T, val a: A): ProductClass<T>
+data class ProductClass2<T, A, B>(override val productClassValue: T, val a: A, val b: B): ProductClass<T> {
   val matchComp get(): Components2<A, B> = Components2(a, b)
 }
 
-data class ProductClass2M<T, A, M, B>(override val value: T, val a: A, val m: M, val b: B): ProductClass<T> {
+data class ProductClass2M<T, A, M, B>(override val productClassValue: T, val a: A, val m: M, val b: B): ProductClass<T> {
   val matchComp get(): Components2M<A, M, B> = Components2M(a, m, b)
 }
 

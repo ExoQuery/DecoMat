@@ -1,7 +1,6 @@
 package io.decomat
 
 import io.decomat.fail.fail
-import io.decomat.fail.failToDivide
 
 // TODO Describe how Comp2 turns into Comp0 etc... for the FlatMap case
 abstract class Pattern2M<P1: Pattern<R1>, M, P2: Pattern<R2>, R1, R2, R>(val pattern1: P1, val pattern2: P2, override val typeR: Typed<R>):
@@ -25,7 +24,7 @@ abstract class Pattern2M<P1: Pattern<R1>, M, P2: Pattern<R2>, R1, R2, R>(val pat
       is HasProductClass<*> ->
         divideInto3ComponentsAny(instance.productComponents)
       is ProductClass2M<*, *, *, *> ->
-        if (!typeR.typecheck(instance.value)) fail("Invalid type of data")  // todo refine message
+        if (!typeR.typecheck(instance.productClassValue)) fail("Invalid type of data")  // todo refine message
         else divideInto3Components(instance as ProductClass<R>)
       else -> fail("Cannot divide $instance into components. It is not a Product2 class.")
     }

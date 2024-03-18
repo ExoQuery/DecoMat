@@ -17,11 +17,11 @@ sealed interface Pattern<out R> {
   fun matchesAny(comps: Any): Boolean =
     when(comps) {
       is ProductClass<*> -> {
-        typeR.typecheck(comps.value) && matches(comps as ProductClass<R>)
+        typeR.typecheck(comps.productClassValue) && matches(comps as ProductClass<R>)
       }
       else -> {
         val compsReal = ProductClass0(comps)
-        typeR.typecheck(compsReal.value) && matches(compsReal as ProductClass<R>)
+        typeR.typecheck(compsReal.productClassValue) && matches(compsReal as ProductClass<R>)
       }
     }
 }
@@ -37,7 +37,7 @@ abstract class Pattern1<out P1: Pattern<R1>, out R1, out R>(val pattern1: P1, ov
   override fun matches(comps: ProductClass<@UnsafeVariance R>) =
   // E.g. for Distinct.M(...): Pattern1<...> check that the thing we are trying to match as `Distinct`
     // is actually a `Distinct` instances
-    typeR.typecheck(comps.value)
+    typeR.typecheck(comps.productClassValue)
       &&
       when(val compsDef = comps.isIfHas()) {
         is ProductClass1<*, *> ->
@@ -50,7 +50,7 @@ abstract class Pattern1<out P1: Pattern<R1>, out R1, out R>(val pattern1: P1, ov
       is HasProductClass<*> ->
         divideIntoComponentsAny(instance.productComponents)
       is ProductClass1<*, *> ->
-        if (!typeR.typecheck(instance.value)) fail("The type ${instance.value} has an unexpected return type")
+        if (!typeR.typecheck(instance.productClassValue)) fail("The type ${instance.productClassValue} has an unexpected return type")
         else divideIntoComponents(instance as ProductClass<R>)
       else -> failToDivide(instance)
     }
@@ -80,7 +80,7 @@ abstract class Pattern2<out P1: Pattern<R1>, out P2: Pattern<R2>, out R1, out R2
       is HasProductClass<*> ->
         divideIntoComponentsAny(instance.productComponents)
       is ProductClass2<*, *, *> ->
-        if (!typeR.typecheck(instance.value)) fail("Invalid type of data")  // todo refine message
+        if (!typeR.typecheck(instance.productClassValue)) fail("Invalid type of data")  // todo refine message
         else divideIntoComponents(instance as ProductClass<R>)
       else -> fail("Cannot divide $instance into components. It is not a Product2 class.")
     }
