@@ -76,11 +76,14 @@ class CustomPattern2M<P1 : Pattern<R1>, M, P2: Pattern<R2>, R1, R2, R>(
   val typecheck: (Any) -> Boolean
 ): Pattern2M<P1, M, P2, R1, R2, R>(innerMatchA, innerMatchB, tpe) {
   override fun matches(comps: ProductClass<R>): Boolean =
-    match(comps.productClassValue).let {
-      it != null &&
-        innerMatchA.matchesAny(it.a as Any) &&
-        innerMatchB.matchesAny(it.b as Any)
-    }
+    if (typecheck(comps.productClassValueUntyped))
+      match(comps.productClassValue).let {
+        it != null &&
+          innerMatchA.matchesAny(it.a as Any) &&
+          innerMatchB.matchesAny(it.b as Any)
+      }
+    else
+      false
 
   override fun divideInto3Components(instance: ProductClass<R>): Components2M<R1, M, R2> =
     match(instance.productClassValue) ?: failToDivide(instance)

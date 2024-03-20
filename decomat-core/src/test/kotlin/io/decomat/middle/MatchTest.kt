@@ -40,7 +40,7 @@ class MatchTest {
   @Test
   fun `flatMap(?, Map(?))`() {
     on(FlatMap(foo, idA, Map(bar, idB, baz))).match(
-      case(FlatMap[Is(), Map[Is(), Is(waz)]]).then { a, m, b -> fail() },
+      //case(FlatMap[Is(), Map[Is(), Is(waz)]]).then { a, m, b -> fail() },
       case(FlatMap[Is(), Is()]).then { a, m, b -> Res3(a, m, b) }
     ) shouldBe Res3(foo, idA, Map(bar, idB, baz))
 

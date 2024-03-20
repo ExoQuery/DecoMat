@@ -12,9 +12,9 @@ import kotlin.reflect.typeOf
 // Also, perhaps this should be controlled by a System property
 // e.g. we can check if System.property("decomat.diagnostic.info") is true and the
 // only propagate the reflection information if it is.
-class Typed<T>(val typecheck: (Any?) -> Boolean) {
+class Typed<T>(val typecheck: (Any?) -> Boolean, val cls: KClass<*>) {
   companion object {
-    inline operator fun <reified T> invoke() = Typed<T>({ it is T })
+    inline operator fun <reified T> invoke() = Typed<T>({ it is T }, T::class)
   }
 }
 
@@ -22,11 +22,11 @@ internal class IsAnyBase: Pattern0<Nothing>(NothingWrapper.Nothing) {
   override fun matches(comps: ProductClass<Nothing>): Boolean  = true
   object NothingWrapper {
     private val nothing: Nothing get() = TODO("Nothing can't be ever assigned or returned")
-    val Nothing = Typed<Nothing>({ false })
+    val Nothing = Typed<Nothing>({ false }, Nothing::class)
   }
 }
 
 private object NothingWrapper {
   private val nothing: Nothing get() = TODO("Nothing can't be ever assigned or returned")
-  val Nothing = Typed<Nothing>({ false })
+  val Nothing = Typed<Nothing>({ false }, Nothing::class)
 }

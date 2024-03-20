@@ -3,7 +3,7 @@ package io.decomat
 @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
 class Is<R> private constructor (private val type: Typed<R>, private val valueCompare: ValueCompare<R>): Pattern0<R>(type) {
   override fun matches(r: ProductClass<R>): Boolean =
-    type.typecheck(r.productClassValue) && when(valueCompare) {
+    type.typecheck(r.productClassValueUntyped) && when(valueCompare) {
       is DoCompare -> r.productClassValue == valueCompare.value
       is DoComparePredicate -> valueCompare.f(r.productClassValue)
       is DontCompare -> true
