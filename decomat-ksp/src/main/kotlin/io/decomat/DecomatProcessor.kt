@@ -405,21 +405,9 @@ class DecomatProcessor(
 
         val adtFunctions =
           """
-            class CopyEager${className}${genericBlock}(${allMembers.map { "val ${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) {
-              operator fun invoke(original: ${model.parametrizedName}) =
-                original.copy(${allMembers.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})  
-            }
-            fun ${genericBlock} ${companionName}.Companion.${fromFunctionName}Eager(${memberKeyValues}) = CopyEager${className}(${allMembers.map { it.fieldName }.commaSep()})
-            context(${model.parametrizedName}) fun ${genericBlock} ${companionName}.Companion.${fromHereFunctionName}Eager(${memberKeyValues}) =
-              CopyEager${className}(${allMembers.map { it.fieldName }.commaSep()}).invoke(this@${className})
-            
-            
             class Copy${className}${genericBlock}(${allMembers.map { "val ${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) {
               operator fun invoke(original: ${model.parametrizedName}) =
-                if (${allMembers.map {"original.${it.fieldName} == ${it.fieldName}"}.joinToString(" && ")})
-                  original
-                else
-                  original.copy(${allMembers.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})  
+                original.copy(${allMembers.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})  
             }
             
             // Helper function for ADTs that allows you to easily copy the element mentioning only the properties you care about
