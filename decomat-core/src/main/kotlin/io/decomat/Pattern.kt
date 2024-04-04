@@ -42,8 +42,7 @@ abstract class Pattern1<out P1: Pattern<R1>, out R1, out R>(val pattern1: P1, ov
   override fun matches(comps: ProductClass<@UnsafeVariance R>) =
   // E.g. for Distinct.M(...): Pattern1<...> check that the thing we are trying to match as `Distinct`
     // is actually a `Distinct` instances
-    typeR.typecheck(comps.productClassValueUntyped)
-      &&
+    typeR.typecheck(comps.productClassValueUntyped) &&
       when(val compsDef = comps.isIfHas()) {
         is ProductClass1<*, *> ->
           wrapNonComps<R1>(compsDef.a).let { pattern1.matches(it) }
@@ -73,8 +72,8 @@ abstract class Pattern2<out P1: Pattern<R1>, out P2: Pattern<R2>, out R1, out R2
   open override fun matches(instance: ProductClass<@UnsafeVariance R>) =
     when(val inst = instance.isIfHas()) {
       is ProductClass2<*, *, *> ->
-        wrapNonComps<R1>(inst.a).let { pattern1.matches(it) }
-          &&
+        typeR.typecheck(instance.productClassValueUntyped) &&
+          wrapNonComps<R1>(inst.a).let { pattern1.matches(it) } &&
           wrapNonComps<R2>(inst.b).let { pattern2.matches(it) }
       else -> false
     }
@@ -85,7 +84,7 @@ abstract class Pattern2<out P1: Pattern<R1>, out P2: Pattern<R2>, out R1, out R2
       is HasProductClass<*> ->
         divideIntoComponentsAny(instance.productComponents)
       is ProductClass2<*, *, *> ->
-        if (!typeR.typecheck(instance.productClassValueUntyped)) fail("Invalid type of data")  // todo refine message
+        if (!typeR.typecheck(instance.productClassValueUntyped)) fail("Invalid type of data. ${instance.productClassValueUntyped} is not a ${typeR.cls.qualifiedName}")
         else divideIntoComponents(instance as ProductClass<R>)
       else -> fail("Cannot divide $instance into components. It is not a Product2 class.")
     }

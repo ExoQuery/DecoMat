@@ -8,9 +8,9 @@ abstract class Pattern2M<P1: Pattern<R1>, M, P2: Pattern<R2>, R1, R2, R>(val pat
   open override fun matches(instance: ProductClass<R>) =
     when(val inst = instance.isIfHas()) {
       is ProductClass2M<*, *, *, *> ->
-        wrapNonComps<R1>(inst.a).let { pattern1.matches(it) }
-          &&
-          wrapNonComps<R2>(inst.b).let { pattern2.matches(it) }
+        typeR.typecheck(instance.productClassValueUntyped) &&
+          wrapNonComps<R1>(inst.a).let { pattern1.matches(it) } &&
+            wrapNonComps<R2>(inst.b).let { pattern2.matches(it) }
       else -> false
     }
 
@@ -24,7 +24,7 @@ abstract class Pattern2M<P1: Pattern<R1>, M, P2: Pattern<R2>, R1, R2, R>(val pat
       is HasProductClass<*> ->
         divideInto3ComponentsAny(instance.productComponents)
       is ProductClass2M<*, *, *, *> ->
-        if (!typeR.typecheck(instance.productClassValueUntyped)) fail("Invalid type of data")  // todo refine message
+        if (!typeR.typecheck(instance.productClassValueUntyped)) fail("Invalid type of data. ${instance.productClassValueUntyped} is not a ${typeR.cls.qualifiedName}")
         else divideInto3Components(instance as ProductClass<R>)
       else -> fail("Cannot divide $instance into components. It is not a Product2 class.")
     }

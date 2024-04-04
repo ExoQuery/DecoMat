@@ -22,11 +22,11 @@ internal class IsAnyBase: Pattern0<Nothing>(NothingWrapper.Nothing) {
   override fun matches(comps: ProductClass<Nothing>): Boolean  = true
   object NothingWrapper {
     private val nothing: Nothing get() = TODO("Nothing can't be ever assigned or returned")
-    val Nothing = Typed<Nothing>({ false }, Nothing::class)
+    val Nothing: Typed<Nothing> = Typed<Nothing>({ false }, kotlin.Nothing::class)
   }
 }
 
 private object NothingWrapper {
   private val nothing: Nothing get() = TODO("Nothing can't be ever assigned or returned")
-  val Nothing = Typed<Nothing>({ false }, Nothing::class)
+  val Nothing: Typed<Nothing> = Typed<Nothing>({ false }, kotlin.Nothing::class)
 }
