@@ -49,9 +49,9 @@ class Then1<R11, R1, R>(
     return f(ContextComponents.of(r1, r), Components1(r11))
   }
 
-  inline fun thenIf(crossinline f: context(ContextComponents1<R1, R>) (Components1<R11>) -> Boolean) = Then1(pat) { r: R -> useComponents(r, { cc, c -> with(cc) { f(cc, c) } }) }
+  inline fun thenIf(crossinline f: (ContextComponents1<R1, R>).(Components1<R11>) -> Boolean) = Then1(pat) { r: R -> useComponents(r, { cc, c -> with(cc) { f(cc, c) } }) }
   inline fun thenIfThis(crossinline f: R.(Components1<R11>) -> Boolean) = Then1(pat) { r: R -> useComponents(r, { _, c -> f(r, c) }) }
-  inline fun <O> then(crossinline f: context(ContextComponents1<R1, R>) (Components1<R11>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { cc, c -> f(cc, c) }) }
+  inline fun <O> then(crossinline f: (ContextComponents1<R1, R>).(Components1<R11>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { cc, c -> f(cc, c) }) }
   inline fun <O> thenThis(crossinline f: R.(Components1<R11>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { _, c -> f(r, c) }) }
 }
 
@@ -70,9 +70,9 @@ class Then2<R11, R12, R1, R>(
     return f(ContextComponents.of(r1, r), Components2(r11, r12))
   }
 
-  inline fun thenIf(crossinline f: context(ContextComponents1<R1, R>) (Components2<R11, R12>) -> Boolean) = Then2(pat) { r: R -> useComponents(r, f) }
+  inline fun thenIf(crossinline f: (ContextComponents1<R1, R>).(Components2<R11, R12>) -> Boolean) = Then2(pat) { r: R -> useComponents(r, f) }
   inline fun thenIfThis(crossinline f: R.(Components2<R11, R12>) -> Boolean) = Then2(pat) { r: R -> useComponents(r, { _, c -> f(r, c) }) }
-  inline fun <O> then(crossinline f: context(ContextComponents1<R1, R>) (Components2<R11, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f) }
+  inline fun <O> then(crossinline f: (ContextComponents1<R1, R>).(Components2<R11, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f) }
   inline fun <O> thenThis(crossinline f: R.(Components2<R11, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { _, c -> f(r, c) }) }
 }
 
@@ -88,9 +88,9 @@ class Then2M<R11, M1, R12, R1, R>(
     return f(ContextComponents.of(r1, r), Components2M(r11, m1, r12))
   }
 
-  inline fun thenIf(crossinline f: context(ContextComponents1<R1, R>) (Components2M<R11, M1, R12>) -> Boolean) = Then2M(pat) { r: R -> useComponents(r, f) }
+  inline fun thenIf(crossinline f: (ContextComponents1<R1, R>).(Components2M<R11, M1, R12>) -> Boolean) = Then2M(pat) { r: R -> useComponents(r, f) }
   inline fun thenIfThis(crossinline f: R.(Components2M<R11, M1, R12>) -> Boolean) = Then2M(pat) { r: R -> useComponents(r, { _, c -> f(r, c) }) }
-  inline fun <O> then(crossinline f: context(ContextComponents1<R1, R>) (Components2M<R11, M1, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f) }
+  inline fun <O> then(crossinline f: (ContextComponents1<R1, R>).(Components2M<R11, M1, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, f) }
   inline fun <O> thenThis(crossinline f: R.(Components2M<R11, M1, R12>) -> O) = StageCase(pat, check) { r: R -> useComponents(r, { _, c -> f(r, c) }) }
 }
 

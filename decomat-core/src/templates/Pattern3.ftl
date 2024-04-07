@@ -81,7 +81,7 @@
 [#macro contextOfContextComponents left, right]
   [@compress single_line=true]
   [#if left == 0 && right == 0]
-  [#else]context([@ContextComponents left, right /])
+  [#else]([@ContextComponents left, right /]).
   [/#if]
   [/@compress]
 [/#macro]
@@ -170,13 +170,13 @@ class Then${i1}${i2}<[@PatternVars 1 i1 /], [@PatternVars 2 i2 /], R>(
     [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.[@divideIntoComponentsAnyX i2 /](r2 as Any)[#else]//skip[/#if]
     return f([@ofContextComponents i1, i2 /], [@compVars2 i1, i2 /])
   }
-  inline fun thenIf(crossinline f: [@contextOfContextComponents i1, i2 /] ([@Components 1 i1 /], [@Components 2 i2 /]) -> Boolean) =
+  inline fun thenIf(crossinline f: [@contextOfContextComponents i1, i2 /]([@Components 1 i1 /], [@Components 2 i2 /]) -> Boolean) =
     Then${i1}${i2}(pat) { v -> useComponents(v, { cc, c1, c2 -> f([@fArgs i1 i2 /]) }) }
 
   inline fun thenIfThis(crossinline f: R.([@Components 1 i1 /], [@Components 2 i2 /]) -> Boolean) =
     Then${i1}${i2}(pat) { v -> useComponents(v, { _, c1, c2 -> f(v, c1, c2) }) }
 
-  inline fun <O> then(crossinline f: [@contextOfContextComponents i1, i2 /] ([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
+  inline fun <O> then(crossinline f: [@contextOfContextComponents i1, i2 /]([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
     StageCase(pat, check) { v -> useComponents(v, { cc, c1, c2 -> f([@fArgs i1 i2 /]) }) }
 
   inline fun <O> thenThis(crossinline f: R.([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
@@ -205,13 +205,13 @@ class Then${i1}M${i2}<[@PatternVars 1 i1 /], M, [@PatternVars 2 i2 /], R>(
     [#if i2 != 0]val [@vars 2 i2 /] = pat.pattern2.[@divideIntoComponentsAnyX i2 /](r2 as Any)[#else]//skip[/#if]
     return f([@ofContextComponents i1, i2 /], [@compVars2M i1, i2 /])
   }
-  inline fun thenIf(crossinline f: [@contextOfContextComponents i1, i2 /] ([@Components 1 i1 /], M, [@Components 2 i2 /]) -> Boolean) =
+  inline fun thenIf(crossinline f: [@contextOfContextComponents i1, i2 /]([@Components 1 i1 /], M, [@Components 2 i2 /]) -> Boolean) =
     Then${i1}M${i2}(pat) { v -> useComponents(v, { cc, c1, m, c2 -> f([@fArgsM i1 i2 /]) }) }
 
   inline fun thenIfThis(crossinline f: R.([@Components 1 i1 /], M, [@Components 2 i2 /]) -> Boolean) =
     Then${i1}M${i2}(pat) { v -> useComponents(v, { _, c1, m, c2 -> f(v, c1, m, c2) }) }
 
-  inline fun <O> then(crossinline f: [@contextOfContextComponents i1, i2 /] ([@Components 1 i1 /], M, [@Components 2 i2 /]) -> O) =
+  inline fun <O> then(crossinline f: [@contextOfContextComponents i1, i2 /]([@Components 1 i1 /], M, [@Components 2 i2 /]) -> O) =
     StageCase(pat, check) { v -> useComponents(v, { cc, c1, m, c2 -> f([@fArgsM i1 i2 /]) }) }
 
   inline fun <O> thenThis(crossinline f: R.([@Components 1 i1 /], M, [@Components 2 i2 /]) -> O) =
