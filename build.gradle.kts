@@ -24,7 +24,7 @@ apply(plugin = "io.github.gradle-nexus.publish-plugin")
 allprojects {
 
   group = "io.exoquery"
-  version = "0.1.219"
+  version = "0.1.1"
 
   apply(plugin = "kotlin")
   apply(plugin = "maven-publish")
@@ -73,22 +73,6 @@ allprojects {
     }
   }
 }
-
-//publishing {
-//  publications {
-//    create<MavenPublication>("mavenJava") {
-//      from(components["kotlin"])
-//
-//      groupId = "io.exoquery"
-//      artifactId = "decomat-core"
-//      version = "0.0.3"
-//    }
-//  }
-//  repositories {
-//    mavenLocal()
-//  }
-//}
-
 
 subprojects {
   val varintName = project.name
