@@ -28,6 +28,19 @@ someone match {
 
 Similarly, in Kotlin with Decomat you can do this:
 ```kotlin
+
+  bigListOfPeople.mapNotNull { p ->
+    p.match(
+      case( Customer[FullName[Is("Joe"), Is()], Partner[Is()]] )
+        .then { first, last, id -> func(first, last, id) },
+    )
+  }
+
+```
+
+
+
+```kotlin
 on(someone).match(
   case( Customer[Name[Is("Joe"), Is()], Partner[Is()]] )
     .then { first, last, id -> func(first, last, id) },
