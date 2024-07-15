@@ -21,73 +21,15 @@ kotlin {
 
 
   // If we're not the CI build a limited set of standard targets
-  if(!isCI) {
-    jvm {
-      jvmToolchain(11)
-    }
+  jvm {
+    jvmToolchain(11)
+  }
 //    js {
 //      browser()
 //      nodejs()
 //    }
 
-    linuxX64()
-//    macosX64()
-//    mingwX64()
-  }
-
-  // If we are a CI, build all the targets for the specified platform
-  if (isLinux && isCI) {
-    jvm {
-      jvmToolchain(11)
-    }
-//    js {
-//      browser()
-//      nodejs()
-//    }
-
-    linuxX64()
-    linuxArm64()
-
-//    @OptIn(ExperimentalWasmDsl::class)
-//    wasmWasi()
-//    @OptIn(ExperimentalWasmDsl::class)
-//    wasmJs()
-
-    androidNativeX64()
-    androidNativeX86()
-    androidNativeArm32()
-    androidNativeArm64()
-
-    // Linux needs to know about these
-    macosX64()
-    macosArm64()
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-//    tvosX64()
-//    tvosArm64()
-//    watchosX64()
-//    watchosArm32()
-//    watchosArm64()
-
-    mingwX64()
-  }
-
-  if (isMac && isCI) {
-    macosX64()
-    macosArm64()
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-//    tvosX64()
-//    tvosArm64()
-//    watchosX64()
-//    watchosArm32()
-//    watchosArm64()
-  }
-  if (isWindows && isCI) {
-    mingwX64()
-  }
+  linuxX64()
 
   sourceSets {
     val commonMain by getting {
