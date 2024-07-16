@@ -65,6 +65,9 @@ dependencies {
   add("kspCommonMainMetadata", project(":decomat-ksp"))
 
   // 2nd build works when you don't include this!
+  // i.e. can do './gradlew clean; ./gradlew build'
+  // that will fail but...
+  // the next './gradlew build' will work
   //add("kspLinuxX64", project(":decomat-ksp"))
 }
 
