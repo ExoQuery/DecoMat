@@ -33,6 +33,13 @@ kotlin {
 
   sourceSets {
     val commonMain by getting {
+      println("------------------------------------------------------------------------------")
+      println("------------------------------------------------------------------------------")
+      println("---------------------- Build Dir List: ${File("$buildDir/generated/ksp/metadata/commonMain/kotlin").listFiles()?.let { it.map { it.name } }} ------------------------------")
+      println("-----------------------Build Dir: $buildDir -----------------------------------------")
+      println("------------------------------------------------------------------------------")
+      println("------------------------------------------------------------------------------")
+
       kotlin.srcDir("$buildDir/generated/ksp/metadata/commonMain/kotlin")
       dependencies {
         //kotlin.srcDir("$buildDir/generated/ksp/main/kotlin")
@@ -56,6 +63,54 @@ kotlin {
 
 dependencies {
   add("kspCommonMainMetadata", project(":decomat-ksp"))
+
+  // 2nd build works when you don't include this!
+  //add("kspLinuxX64", project(":decomat-ksp"))
+}
+
+
+//tasks.named("compileCommonMainKotlinMetadata") {
+//  doFirst {
+//    println("******************************************************************************")
+//    println("------------------------------------------------------------------------------")
+//    println("---------------------- Build Dir List: ${File("$buildDir/generated/ksp/metadata/commonMain/kotlin").listFiles()?.let { it.map { it.name } }} ------------------------------")
+//    println("-----------------------Build Dir: $buildDir -----------------------------------------")
+//    println("------------------------------------------------------------------------------")
+//    println("******************************************************************************")
+//  }
+//}
+
+tasks.register("listTasks") {
+  doLast {
+    println("Available tasks:")
+    tasks.forEach { task ->
+      println("${task.name} - ${task::class.java}")
+    }
+  }
+}
+
+tasks.forEach {
+  if (it.name == "compileCommonMainKotlinMetadata") {
+    println("**************************** HERE ****************************")
+  }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon>().configureEach {
+  doFirst {
+    println("******************************************************************************")
+    println("-------------- From: ${name} ----------------")
+    println("------------------------------------------------------------------------------")
+    println("---------------------- Build Dir List: ${File("$buildDir/generated/ksp/metadata/commonMain/kotlin").listFiles()?.let { it.map { it.name } }} ------------------------------")
+    println("-----------------------Build Dir: $buildDir -----------------------------------------")
+    println("------------------------------------------------------------------------------")
+    println("******************************************************************************")
+  }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach {
+  if (name != "kspCommonMainKotlinMetadata") {
+    dependsOn("kspCommonMainKotlinMetadata")
+  }
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
