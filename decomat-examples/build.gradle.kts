@@ -62,6 +62,7 @@ kotlin {
 }
 
 dependencies {
+
   add("kspCommonMainMetadata", project(":decomat-ksp"))
 
   // 2nd build works when you don't include this!
@@ -69,6 +70,16 @@ dependencies {
   // that will fail but...
   // the next './gradlew build' will work
   //add("kspLinuxX64", project(":decomat-ksp"))
+
+  /*
+  FAILS!
+  alexi@alexi-xps:~/git/DecoMat$ ./gradlew clean; ./gradlew decomat-ksp:build; ./gradlew build
+
+  WORKS!
+  ./gradlew clean; ./gradlew decomat-core:build; ./gradlew build
+   */
+
+  // when we include this it seems that compileCommonMainKotlinMetadata runs AFTER compileKotlinLinuxX64 instead of before!
 }
 
 
