@@ -24,10 +24,10 @@ kotlin {
   jvm {
     jvmToolchain(11)
   }
-//    js {
-//      browser()
-//      nodejs()
-//    }
+    js {
+      nodejs()
+      //browser()
+    }
 
   linuxX64()
 

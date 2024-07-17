@@ -118,8 +118,8 @@ class DecomatProcessor(
 
   sealed interface ModelType {
     data class A(val a: Member): ModelType
-    data class AB(val a: Member, val b: Member): ModelType
-    data class AMB(val a: Member, val m: Member, val b: Member): ModelType
+    data class AB(val a: Member, val b_ab: Member): ModelType
+    data class AMB(val a: Member, val m: Member, val b_amb: Member): ModelType
     object None: ModelType
   }
 

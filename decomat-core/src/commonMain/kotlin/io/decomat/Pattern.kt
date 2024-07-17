@@ -74,7 +74,7 @@ abstract class Pattern2<out P1: Pattern<R1>, out P2: Pattern<R2>, out R1, out R2
       is ProductClass2<*, *, *> ->
         wrapNonComps<R1>(inst.a).let { pattern1.matches(it) }
           &&
-          wrapNonComps<R2>(inst.b).let { pattern2.matches(it) }
+          wrapNonComps<R2>(inst.getProdB()).let { pattern2.matches(it) }
       else -> false
     }
 
@@ -94,7 +94,7 @@ abstract class Pattern2<out P1: Pattern<R1>, out P2: Pattern<R2>, out R1, out R2
       is ProductClass2<*, *, *> ->
         // for FlatMap_M: ~Pattern2<Query, Query> R1 and R2 will be Query
         // (i wrote ~Pattern2<...> because it's HasProductComponents)
-          Components2(inst.a as R1, inst.b as R2)
+          Components2(inst.a as R1, inst.getProdB() as R2)
       else -> fail("must match properly") // todo refine message
     }
 }

@@ -39,10 +39,10 @@ kotlin {
     jvm {
         jvmToolchain(11)
     }
-//    js {
-//      browser()
-//      nodejs()
-//    }
+    js {
+      //browser()
+      nodejs()
+    }
 
     linuxX64()
 

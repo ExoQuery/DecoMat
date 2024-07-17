@@ -22,7 +22,7 @@ kotlin {
 
       dependencies {
         project(":decomat-core")
-        implementation("com.google.devtools.ksp:symbol-processing-api:1.8.20-1.0.11")
+        implementation("com.google.devtools.ksp:symbol-processing-api:1.9.22-1.0.18")
 
         //implementation("com.facebook:ktfmt:0.43")
         implementation(kotlin("reflect"))
