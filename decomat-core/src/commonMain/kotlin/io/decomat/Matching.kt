@@ -25,6 +25,9 @@ class DoMatch<in R>(private val value: R) {
   fun <O> match(vararg cases: Case<O, Any>): O? =
     cases.find { theCase -> theCase.matches(value as Any) }?.eval(value as Any)
 
+  fun <O> matchOne(case: Case<O, Any>): O? =
+    listOf(case).find { theCase -> theCase.matches(value as Any) }?.eval(value as Any)
+
 //  fun <O> matchAny(vararg cases: Case<O, R>): O? =
 //    cases.find { theCase -> theCase.matches(value as Any) }?.eval(value as Any)
 }

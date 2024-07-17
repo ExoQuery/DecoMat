@@ -21,13 +21,17 @@ data class Person(@Component val name: Name, @Component val age: Int): HasProduc
   companion object {}
 }
 
+fun <A: Pattern<AP>, B: Pattern<BP>, AP: String, BP: String> FullName.Companion.getget(aa: A, bbbb: B) = FullName_M(aa, bbbb)
+
+class FullName_MM<A: Pattern<AP>, B: Pattern<BP>, AP: String, BP: String>(a: A, b: B): Pattern2<A, B, AP, BP, FullName>(a, b, Typed<FullName>())
 
 object FirstLast {
-  operator fun get(first: Pattern0<String>, last: Pattern0<String>) =
+  fun blahblah(first: Pattern0<String>, last: Pattern0<String>) =
     customPattern2(first, last) { it: Name ->
-      on(it).match(
-        case(FullName[Is(), Is()]).then { first, last -> Components2(first, last) },
-        case(SimpleName[Is(), Is()]).then { first, last -> Components2(first, last) }
+      on(it).matchOne(
+        case(FullName_MM(Is("foo"), Is("bar"))).then { _, _ -> TODO() }
+//        case(FullName.getget(Is(), Is())).then { first, last -> Components2(first, last) }//,
+//        case(SimpleName[Is(), Is()]).then { first, last -> Components2(first, last) }
       )
     }
 }

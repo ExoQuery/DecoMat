@@ -112,20 +112,20 @@ val runFreemarkerTemplate by tasks.registering {
 }
 
 
-tasks.withType<KotlinCompile> {
-    dependsOn(runFreemarkerTemplate)
-}
-
-tasks.withType<KotlinNativeCompile> {
-    dependsOn(runFreemarkerTemplate)
-}
-
-// THIS is the actual task used by the KMP multiplatform plugin. Without this,
-// the freemarker dependency won't run in time for the dependencies to pick it up.
-// That means that a command like `./gradlew clean build` for the base-project will fail.
-tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
-    dependsOn(runFreemarkerTemplate)
-}
+//tasks.withType<KotlinCompile> {
+//    dependsOn(runFreemarkerTemplate)
+//}
+//
+//tasks.withType<KotlinNativeCompile> {
+//    dependsOn(runFreemarkerTemplate)
+//}
+//
+//// THIS is the actual task used by the KMP multiplatform plugin. Without this,
+//// the freemarker dependency won't run in time for the dependencies to pick it up.
+//// That means that a command like `./gradlew clean build` for the base-project will fail.
+//tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+//    dependsOn(runFreemarkerTemplate)
+//}
 
 class OutputDirective : TemplateDirectiveModel {
     @Throws(TemplateException::class, IOException::class)
