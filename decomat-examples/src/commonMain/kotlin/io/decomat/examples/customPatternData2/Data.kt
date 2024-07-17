@@ -29,7 +29,7 @@ object FirstLast {
   fun blahblah(first: Pattern0<String>, last: Pattern0<String>) =
     customPattern2(first, last) { it: Name ->
       on(it).matchOne(
-        case(FullName_MM(Is("foo"), Is("bar"))).then { _, _ -> TODO() }
+        case(FullName_MM(Is("foo"), Is("bar"))).then { first, last -> Components2(first, last) }
 //        case(FullName.getget(Is(), Is())).then { first, last -> Components2(first, last) }//,
 //        case(SimpleName[Is(), Is()]).then { first, last -> Components2(first, last) }
       )
