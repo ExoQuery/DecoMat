@@ -62,37 +62,18 @@ kotlin {
 }
 
 dependencies {
-
+  // NOTE. This has failed before on upstream dependencies which turned out
+  // to cuase errors in `compileCommonMainKotlinMetadata`. This was fixed by adding
+  // `dependsOn(runFreemarkerTemplate)` specifically for `org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>`.
+  // Specifically `./gradlew clean build` and `./gradlew clean;./gradlew build` would fail while
+  // `./gradlew clean; ./gradlew decomat-core:build; ./gradlew build` would succeed which meant
+  // that something that `decomat-core` was doing was not getting picked up by decomat-examples
+  // until a subsequent build. This turned out to be the `runFreemarkerTemplate` task results.
   add("kspCommonMainMetadata", project(":decomat-ksp"))
 
-  // 2nd build works when you don't include this!
-  // i.e. can do './gradlew clean; ./gradlew build'
-  // that will fail but...
-  // the next './gradlew build' will work
+  // Don't think this is needed
   //add("kspLinuxX64", project(":decomat-ksp"))
-
-  /*
-  FAILS!
-  alexi@alexi-xps:~/git/DecoMat$ ./gradlew clean; ./gradlew decomat-ksp:build; ./gradlew build
-
-  WORKS!
-  ./gradlew clean; ./gradlew decomat-core:build; ./gradlew build
-   */
-
-  // when we include this it seems that compileCommonMainKotlinMetadata runs AFTER compileKotlinLinuxX64 instead of before!
 }
-
-
-//tasks.named("compileCommonMainKotlinMetadata") {
-//  doFirst {
-//    println("******************************************************************************")
-//    println("------------------------------------------------------------------------------")
-//    println("---------------------- Build Dir List: ${File("$buildDir/generated/ksp/metadata/commonMain/kotlin").listFiles()?.let { it.map { it.name } }} ------------------------------")
-//    println("-----------------------Build Dir: $buildDir -----------------------------------------")
-//    println("------------------------------------------------------------------------------")
-//    println("******************************************************************************")
-//  }
-//}
 
 tasks.register("listTasks") {
   doLast {
@@ -100,24 +81,6 @@ tasks.register("listTasks") {
     tasks.forEach { task ->
       println("${task.name} - ${task::class.java}")
     }
-  }
-}
-
-tasks.forEach {
-  if (it.name == "compileCommonMainKotlinMetadata") {
-    println("**************************** HERE ****************************")
-  }
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon>().configureEach {
-  doFirst {
-    println("******************************************************************************")
-    println("-------------- From: ${name} ----------------")
-    println("------------------------------------------------------------------------------")
-    println("---------------------- Build Dir List: ${File("$buildDir/generated/ksp/metadata/commonMain/kotlin").listFiles()?.let { it.map { it.name } }} ------------------------------")
-    println("-----------------------Build Dir: $buildDir -----------------------------------------")
-    println("------------------------------------------------------------------------------")
-    println("******************************************************************************")
   }
 }
 
@@ -133,6 +96,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
   }
 }
 
+// THIS is the actual task used by the KMP multiplatform plugin.
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().configureEach {
   if (name != "kspCommonMainKotlinMetadata") {
     dependsOn("kspCommonMainKotlinMetadata")
