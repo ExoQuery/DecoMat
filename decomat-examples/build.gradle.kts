@@ -22,7 +22,7 @@ kotlin {
 
   // If we're not the CI build a limited set of standard targets
   jvm {
-    jvmToolchain(11)
+    //jvmToolchain(11)
   }
     js {
       nodejs()

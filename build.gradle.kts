@@ -4,10 +4,10 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
   `maven-publish`
   signing
-  kotlin("multiplatform") version "1.9.22" apply false
+  kotlin("multiplatform") version "2.0.0" apply false
   id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
   id("org.jetbrains.dokka") version "1.9.10"
-  id("com.google.devtools.ksp") version "1.9.22-1.0.17"
+  id("com.google.devtools.ksp") version "2.0.0-1.0.23"
 }
 
 allprojects {

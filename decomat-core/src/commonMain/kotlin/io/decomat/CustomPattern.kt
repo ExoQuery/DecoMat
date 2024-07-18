@@ -50,8 +50,8 @@ class CustomPattern2<P1 : Pattern<R1>, P2: Pattern<R2>, R1, R2, R>(
   override fun matches(comps: ProductClass<R>): Boolean =
     match(comps.value).let {
       it != null &&
-        innerMatchA.matchesAny(it.a as Any) &&
-        innerMatchB.matchesAny(it.getProdB() as Any)
+        innerMatchA.matchesAny(it.r as Any) &&
+        innerMatchB.matchesAny(it.l as Any)
     }
 
   override fun divideIntoComponents(instance: ProductClass<R>): Components2<R1, R2> =
@@ -75,8 +75,8 @@ class CustomPattern2M<P1 : Pattern<R1>, M, P2: Pattern<R2>, R1, R2, R>(
   override fun matches(comps: ProductClass<R>): Boolean =
     match(comps.value).let {
       it != null &&
-        innerMatchA.matchesAny(it.a as Any) &&
-        innerMatchB.matchesAny(it.getProdB() as Any)
+        innerMatchA.matchesAny(it.r as Any) &&
+        innerMatchB.matchesAny(it.l as Any)
     }
 
   override fun divideInto3Components(instance: ProductClass<R>): Components2M<R1, M, R2> =

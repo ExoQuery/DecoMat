@@ -37,7 +37,7 @@ kotlin {
     val isWindows = platform == "windows"
 
     jvm {
-        jvmToolchain(11)
+        //jvmToolchain(11)
     }
     js {
       //browser()

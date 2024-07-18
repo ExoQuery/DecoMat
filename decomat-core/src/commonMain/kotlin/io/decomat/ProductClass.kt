@@ -57,15 +57,14 @@ fun <T, A, B> productComponentsOf(host: T, componentA: A, componentB: B) = Produ
 fun <T, A, M, B> productComponentsOf(host: T, componentA: A, componentM: M, componentB: B) = ProductClass2M(host, componentA, componentM, componentB)
 
 data class ProductClass0<T>(override val value: T): ProductClass<T>
-data class ProductClass1<T, A>(override val value: T, val a: A): ProductClass<T>
-data class ProductClass2<T, A, B>(override val value: T, val a: A, val bpc: B): ProductClass<T> {
-  val matchComp get(): Components2<A, B> = Components2(a, bpc)
-  fun getProdB() = bpc
+data class ProductClass1<T, A>(override val value: T, val x: A): ProductClass<T>
+data class ProductClass2<T, A, B>(override val value: T, val r: A, val l: B): ProductClass<T> {
+  val matchComp get(): Components2<A, B> = Components2(r, l)
 }
 
-data class ProductClass2M<T, A, M, B>(override val value: T, val a: A, val m: M, val bpcm: B): ProductClass<T> {
-  val matchComp get(): Components2M<A, M, B> = Components2M(a, m, bpcm)
-  fun getMProdB() = bpcm
+data class ProductClass2M<T, A, M, B>(override val value: T, val r: A, val m: M, val l: B): ProductClass<T> {
+  val matchComp get(): Components2M<A, M, B> = Components2M(r, m, l)
+  fun getMProdB() = l
 }
 
 /** I think in order to avoid nastiness in kapshot experiments with hard-typing this has to be
@@ -76,13 +75,6 @@ data class ProductClass2M<T, A, M, B>(override val value: T, val a: A, val m: M,
 sealed interface Components
 data class Components1<in A>(val a: @UnsafeVariance A): Components
 // For example: data class FlatMap(head: Query, body: Query) extends Comp2<Query, Query>
-data class Components2<in A, in B>(val a: @UnsafeVariance A, val bb: @UnsafeVariance B): Components {
-  fun getProdA() = a
-  fun getProdB() = bb
-}
+data class Components2<in A, in B>(val r: @UnsafeVariance A, val l: @UnsafeVariance B): Components
 
-data class Components2M<in A, in M, in B>(val a: @UnsafeVariance A, val m: @UnsafeVariance M, val bbb: @UnsafeVariance B): Components {
-  fun getProdA() = a
-  fun getProdM() = m
-  fun getProdB() = bbb
-}
+data class Components2M<in A, in M, in B>(val r: @UnsafeVariance A, val m: @UnsafeVariance M, val l: @UnsafeVariance B): Components
