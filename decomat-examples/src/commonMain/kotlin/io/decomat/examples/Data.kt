@@ -1,7 +1,6 @@
-package io.decomat.examples.custompatterndatay
+package io.decomat.examples
 
 import io.decomat.*
-import io.decomat.examples.custompatterndatay.FullName_M
 
 sealed interface Name
 @Matchable
@@ -22,15 +21,7 @@ data class Person(@Component val name: Name, @Component val age: Int): HasProduc
   companion object {}
 }
 
-fun <A: Pattern<AP>, B: Pattern<BP>, AP: String, BP: String> FullName.Companion.getget(aa: A, bbbb: B) = FullName_M(aa, bbbb)
-
-object FirstLast {
-  fun blahblah(): Pattern2<Pattern0<String>, Pattern0<String>, String, String, Name> {
-    //val x = FullName_M(Is("foo"), Is("bar"))
-    return TODO()
-  }
-
-  //fun foofoo() {
-  //  val x = FullName_M(Is("foo"), Is("bar"))
-  //}
+fun usingGen(): String {
+  val x = FullName_M(Is("foo"), Is("bar"))
+  return "doesn't matter"
 }
