@@ -229,6 +229,9 @@ class DecomatProcessor(
     val className = model.className
     val classUseSiteName = model.useSiteName
     val companionName = model.className
+    fun Member.primitiveOrNull() = if (this.className == "String") "String" else null
+    fun Member.isPrimitive() = this.className == "String"
+    val members = model.members
 
     val modelType = model.toModelType()
 
@@ -239,10 +242,25 @@ class DecomatProcessor(
     )
 
     file.bufferedWriter().use { writer ->
+      fun eachGenericLetter(f: Member.(String) -> String) =
+        model.members.withIndex().filter { (_, member) -> member.className != "String" }.map { (num, member) ->
+          val letter = ('a' + num).uppercase()
+          f(member, letter)
+        }
+
       fun eachLetter(f: Member.(String) -> String) =
         model.members.withIndex().map { (num, member) ->
           val letter = ('a' + num).uppercase()
           f(member, letter)
+        }
+
+      fun eachTemplateParam(f: Member.(String) -> String) =
+        model.members.withIndex().map { (num, member) ->
+          val letter = ('a' + num).uppercase()
+          if (member.isPrimitive())
+            member.className
+          else
+            f(member, letter)
         }
 
       val memberParams = model.members.map { it.className }
@@ -261,12 +279,14 @@ class DecomatProcessor(
 
       val mString = if (model.middleMembers.isNotEmpty()) "M" else ""
 
+
+
       // Generate: A: Pattern<AP>, B: Pattern<BP>
       val pats =
         when (modelType) {
-          is ModelType.A -> "A: Pattern<AP>"
-          is ModelType.AB -> "A: Pattern<AP>, B: Pattern<BP>"
-          is ModelType.AMB -> "A: Pattern<AP>, B: Pattern<BP>" // No M is defined here because it is a concrete type in patLetters below
+          is ModelType.A -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>"
+          is ModelType.AB -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>, B: Pattern<${ members[1].primitiveOrNull() ?: "BP" }>"
+          is ModelType.AMB -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>, B: Pattern<${ members[1].primitiveOrNull() ?: "BP" }>" // No M is defined here because it is a concrete type in patLetters below
           is ModelType.None -> ""
         }
 
@@ -291,13 +311,15 @@ class DecomatProcessor(
       fun List<String>.commaSep() = joinToString(", ")
 
       // Generate: AP: Query, BP: Query
-      val patTypes = (eachLetter { "${it}P: ${this.className}" } + typeParams).commaSep()
+      val patTypes = (eachGenericLetter { "${it}P: ${this.className}" } + typeParams)
       // Generate: Pattern2<A, B, AP, BP, FlatMap>
-      val subClass = "Pattern${model.members.size}${mString}<${(patLetters + eachLetter { "${it}P" } + listOf(classUseSiteName)).commaSep()}>"
+      val subClass = "Pattern${model.members.size}${mString}<${(patLetters + eachTemplateParam { "${it}P" } + listOf(classUseSiteName)).commaSep()}>"
       // Generate: a: A, b: B
-      val classValsTypes = eachLetter { "${it.lowercase()}: $it" }.commaSep()
+      val functionsParamsTypes = eachLetter { "${it.lowercase()}v: $it" }.commaSep()
+      // Generate: val a: A, val b: B
+      val classValsTypes = eachLetter { "val ${it.lowercase()}v: $it" }.commaSep()
       // Generate: a, b
-      val classVals = eachLetter { it.lowercase() }.commaSep()
+      val classVals = eachLetter { "${it.lowercase()}v" }.commaSep()
 
 
       writer.apply {
@@ -306,14 +328,16 @@ class DecomatProcessor(
 
         // include the '            ' in joinToString below since that is the margin of the fileContent variable that needs to be in
         // front of everything, otherwise it won't be stripped properly
+        val generics = (listOf(pats) + patTypes).commaSep()
+
         val fileContent =
           """
             package $packageName
             
             ${model.imports.map { "import $it" }.joinToString("\n            ")}
             
-            class ${className}_M<$pats, $patTypes>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
-            operator fun <$pats, $patTypes> ${companionName}.Companion.get($classValsTypes) = ${className}_M($classVals)
+            data class ${className}_M<${generics}>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
+            operator fun <${generics}> ${companionName}.Companion.get($functionsParamsTypes) = ${className}_M($classVals)
             val ${companionName}.Companion.Is get() = Is<$classUseSiteName>()
              
           """.trimIndent()

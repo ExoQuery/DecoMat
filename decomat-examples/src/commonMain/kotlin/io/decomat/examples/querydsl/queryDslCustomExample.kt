@@ -36,8 +36,10 @@ object NestedM {
 }
 
 object FlatMapM {
-  operator fun <AP: Pattern<A>, BP: Pattern<B>, A: Query<*>, B: Query<*>> get(head: AP, body: BP): Pattern2<AP, BP, A, B, FlatMap<*, *>> =
-    customPattern2(head, body) { it: FlatMap<*, *> -> Components2(it.head, it.body) }
+  operator fun <AP: Pattern<A>, BP: Pattern<B>, A: Query<*>, B: Query<*>> get(head: AP, body: BP): Pattern2<AP, BP, A, B, FlatMap<*, *>> {
+    //val x = io.decomat.examples.querydsl.FlatMap_M(Is(), Is())
+    return customPattern2(head, body) { it: FlatMap<*, *> -> Components2(it.head, it.body) }
+  }
 }
 
 object EntityM {

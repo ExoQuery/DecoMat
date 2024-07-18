@@ -1,4 +1,4 @@
-package io.decomat.examples.customPatternData1
+package io.decomat.examples.custompatterndatax
 
 import io.decomat.*
 

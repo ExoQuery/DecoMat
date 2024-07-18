@@ -1,6 +1,7 @@
-package io.decomat.examples.customPatternData2
+package io.decomat.examples.custompatterndatay
 
 import io.decomat.*
+import io.decomat.examples.custompatterndatay.FullName_M
 
 sealed interface Name
 @Matchable
@@ -23,15 +24,13 @@ data class Person(@Component val name: Name, @Component val age: Int): HasProduc
 
 fun <A: Pattern<AP>, B: Pattern<BP>, AP: String, BP: String> FullName.Companion.getget(aa: A, bbbb: B) = FullName_M(aa, bbbb)
 
-class FullName_MM<A: Pattern<AP>, B: Pattern<BP>, AP: String, BP: String>(a: A, b: B): Pattern2<A, B, AP, BP, FullName>(a, b, Typed<FullName>())
-
 object FirstLast {
-  fun blahblah(first: Pattern0<String>, last: Pattern0<String>) =
-    customPattern2(first, last) { it: Name ->
-      on(it).matchOne(
-        case(FullName_M(Is("foo"), Is("bar"))).then { first, last -> Components2(first, last) }
-//        case(FullName.getget(Is(), Is())).then { first, last -> Components2(first, last) }//,
-//        case(SimpleName[Is(), Is()]).then { first, last -> Components2(first, last) }
-      )
-    }
+  fun blahblah(): Pattern2<Pattern0<String>, Pattern0<String>, String, String, Name> {
+    //val x = FullName_M(Is("foo"), Is("bar"))
+    return TODO()
+  }
+
+  //fun foofoo() {
+  //  val x = FullName_M(Is("foo"), Is("bar"))
+  //}
 }
