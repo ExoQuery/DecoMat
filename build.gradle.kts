@@ -11,7 +11,7 @@ plugins {
 
 allprojects {
   group = "io.exoquery"
-  version = "4.0.0"
+  version = "4.0.1"
 
   //val varintName = project.name
 
