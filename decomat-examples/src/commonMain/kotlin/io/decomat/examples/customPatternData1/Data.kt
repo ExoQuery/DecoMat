@@ -18,13 +18,13 @@ data class Person1(@Component val name: Name): HasProductClass<Person1> {
   companion object {}
 }
 
-
-object FirstName2 {
-  operator fun get(nameString: Pattern0<String>) =
-    customPattern1(nameString) { it: Name ->
-      when(it) {
-        is SimpleName -> Components1(it.first)
-        is FullName -> Components1(it.first)
-      }
-    }
-}
+// Cannot have this here because it causes: https://youtrack.jetbrains.com/issue/KT-70025/KMPKSP-JavaScript-compile-fails-with-Cannot-read-properties-of-undefined
+//object FirstName2 {
+//  operator fun get(nameString: Pattern0<String>) =
+//    customPattern1(nameString) { it: Name ->
+//      when(it) {
+//        is SimpleName -> Components1(it.first)
+//        is FullName -> Components1(it.first)
+//      }
+//    }
+//}

@@ -21,13 +21,13 @@ data class Person(@Component val name: Name, @Component val age: Int): HasProduc
   companion object {}
 }
 
-
-object FirstLast {
-  operator fun get(first: Pattern0<String>, last: Pattern0<String>) =
-    customPattern2(first, last) { it: Name ->
-      on(it).match(
-        case(FullName[Is(), Is()]).then { first, last -> Components2(first, last) },
-        case(SimpleName[Is(), Is()]).then { first, last -> Components2(first, last) }
-      )
-    }
-}
+// Cannot have this here because it causes: https://youtrack.jetbrains.com/issue/KT-70025/KMPKSP-JavaScript-compile-fails-with-Cannot-read-properties-of-undefined
+//object FirstLast {
+//  operator fun get(first: Pattern0<String>, last: Pattern0<String>) =
+//    customPattern2(first, last) { it: Name ->
+//      on(it).match(
+//        case(FullName[Is(), Is()]).then { first, last -> Components2(first, last) },
+//        case(SimpleName[Is(), Is()]).then { first, last -> Components2(first, last) }
+//      )
+//    }
+//}
