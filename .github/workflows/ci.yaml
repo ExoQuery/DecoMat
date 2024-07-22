@@ -7,14 +7,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
+        # OSX takes 2x longer to build i.e. usually 8m instead of 4m for the linux/windows builds
+        # maybe want to skip it for non-release builds. Alternatively maybe parallelize the osx targets
+        # e.g. one VM can do buildMacosX64 buildMacosArm64 buildIosX64
+        # and the other can do buildIosArm64 buildIosSimulatorArm64
+        # or something like that
+        os: [ ubuntu-latest, windows-latest ] #, macOS-latest
         include:
           - os: ubuntu-latest
             platform: linux
             build_command: build
-          - os: macOS-latest
-            platform: mac
-            build_command: build
+#          - os: macOS-latest
+#            platform: mac
+#            build_command: build
           - os: windows-latest
             platform: windows
             build_command: build
