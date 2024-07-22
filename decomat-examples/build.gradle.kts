@@ -169,14 +169,14 @@ tasks.withType<org.gradle.api.tasks.bundling.Jar>().configureEach {
 }
 
 tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
-  println("-------------- Configuring org.gradle.jvm.tasks.Jar: ${name} --------------")
+  println("-------------- Configuring org.gradle.jvm.tasks.Jar: ${name} ${if (name.endsWith("SourcesJar")) "(YAY)" else ""} --------------")
   if (name.endsWith("SourcesJar")) {
     dependsOn("kspCommonMainKotlinMetadata")
   }
 }
 
 tasks.forEach {
-  println("---------- [PRINTING] Task: ${it.name} - ${it::class.java} ----------")
+  println("---------- [PRINTING] Task: ${it.name} - ${it::class.java} ${if (name.endsWith("SourcesJar")) "(YAY)" else ""} ----------")
 }
 
 // find every task ending with SourcesJar and make it depend on kspCommonMainKotlinMetadata
