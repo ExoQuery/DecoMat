@@ -181,7 +181,7 @@ tasks.forEach {
 
 // find every task ending with SourcesJar and make it depend on kspCommonMainKotlinMetadata
 tasks.matching { true }.configureEach {
-  println("---------- [MATCHING TRUE] Task: ${it.name} - ${it::class.java} ${if (name.endsWith("SourcesJar")) "(YAY)" else ""} ----------")
+  println("---------- [MATCHING TRUE] Task: ${name} - ${this::class.java} ${if (name.endsWith("SourcesJar")) "(YAY)" else ""} ----------")
 
   //dependsOn("kspCommonMainKotlinMetadata")
 }
