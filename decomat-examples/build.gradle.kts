@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.com.intellij.psi.impl.source.SourceJavaCodeReference
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 
 plugins {
@@ -160,12 +161,16 @@ if (project.hasProperty("platform") && project.property("platform") == "linux") 
   }
 }
 
-afterEvaluate {
-  // find every task ending with SourcesJar and make it depend on kspCommonMainKotlinMetadata
-  tasks.matching { name.endsWith("SourcesJar") }.configureEach {
+tasks.withType<Jar>().configureEach {
+  if (name.endsWith("SourcesJar")) {
     dependsOn("kspCommonMainKotlinMetadata")
   }
 }
+
+// find every task ending with SourcesJar and make it depend on kspCommonMainKotlinMetadata
+//tasks.matching { name.endsWith("SourcesJar") }.configureEach {
+//  dependsOn("kspCommonMainKotlinMetadata")
+//}
 
 // Add the kspCommonMainKotlinMetadata dependency to sourcesJar tasks if needed
 // (i.e. in some cases the task e.g. tasks("jsSourcesJar") will not exist)
