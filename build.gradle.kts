@@ -144,5 +144,10 @@ allprojects {
   tasks.withType<AbstractPublishToMaven>().configureEach {
     val signingTasks = tasks.withType<Sign>()
     mustRunAfter(signingTasks)
+
+    // Also, do not publish the decomat-examples project
+    onlyIf {
+      !this.project.name.contains("decomat-examples")
+    }
   }
 }

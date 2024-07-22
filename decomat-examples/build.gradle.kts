@@ -161,29 +161,10 @@ if (project.hasProperty("platform") && project.property("platform") == "linux") 
   }
 }
 
-tasks.withType<org.gradle.api.tasks.bundling.Jar>().configureEach {
-  println("-------------- Configuring org.gradle.api.tasks.bundling.Jar: ${name} --------------")
-  if (name.endsWith("SourcesJar")) {
-    //dependsOn("kspCommonMainKotlinMetadata")
-  }
-}
-
 tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
-  println("-------------- Configuring org.gradle.jvm.tasks.Jar: ${name} ${if (name.endsWith("SourcesJar")) "(YAY)" else ""} --------------")
   if (name.endsWith("SourcesJar")) {
-    //dependsOn("kspCommonMainKotlinMetadata")
+    dependsOn("kspCommonMainKotlinMetadata")
   }
-}
-
-tasks.forEach {
-  println("---------- [PRINTING] Task: ${it.name} - ${it::class.java} ${if (name.endsWith("SourcesJar")) "(YAY)" else ""} ----------")
-}
-
-// find every task ending with SourcesJar and make it depend on kspCommonMainKotlinMetadata
-tasks.matching { true }.configureEach {
-  println("---------- [MATCHING TRUE] Task: ${name} - ${this::class.java} ${if (name.endsWith("SourcesJar")) "(YAY)" else ""} ----------")
-
-  //dependsOn("kspCommonMainKotlinMetadata")
 }
 
 // Add the kspCommonMainKotlinMetadata dependency to sourcesJar tasks if needed
