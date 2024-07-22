@@ -160,11 +160,12 @@ if (project.hasProperty("platform") && project.property("platform") == "linux") 
   }
 }
 
-tasks["jsSourcesJar"].dependsOn("kspCommonMainKotlinMetadata")
-tasks["jvmSourcesJar"].dependsOn("kspCommonMainKotlinMetadata")
-tasks["linuxX64SourcesJar"].dependsOn("kspCommonMainKotlinMetadata")
-tasks["mingwX64SourcesJar"].dependsOn("kspCommonMainKotlinMetadata")
-tasks["sourcesJar"].dependsOn("kspCommonMainKotlinMetadata")
+// Add the kspCommonMainKotlinMetadata dependency to sourcesJar tasks if needed
+tasks.findByName("jsSourcesJar")?.dependsOn("kspCommonMainKotlinMetadata")
+tasks.findByName("jvmSourcesJar")?.dependsOn("kspCommonMainKotlinMetadata")
+tasks.findByName("linuxX64SourcesJar")?.dependsOn("kspCommonMainKotlinMetadata")
+tasks.findByName("mingwX64SourcesJar")?.dependsOn("kspCommonMainKotlinMetadata")
+tasks.findByName("sourcesJar")?.dependsOn("kspCommonMainKotlinMetadata")
 
 tasks.withType<AbstractTestTask>().configureEach {
   testLogging {
