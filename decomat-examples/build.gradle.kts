@@ -162,6 +162,7 @@ if (project.hasProperty("platform") && project.property("platform") == "linux") 
 }
 
 tasks.withType<Jar>().configureEach {
+  println("-------------- Configuring Jar: ${name} --------------")
   if (name.endsWith("SourcesJar")) {
     dependsOn("kspCommonMainKotlinMetadata")
   }
