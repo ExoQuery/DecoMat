@@ -161,8 +161,15 @@ if (project.hasProperty("platform") && project.property("platform") == "linux") 
   }
 }
 
-tasks.withType<Jar>().configureEach {
-  println("-------------- Configuring Jar: ${name} --------------")
+tasks.withType<org.gradle.api.tasks.bundling.Jar>().configureEach {
+  println("-------------- Configuring org.gradle.api.tasks.bundling.Jar: ${name} --------------")
+  if (name.endsWith("SourcesJar")) {
+    dependsOn("kspCommonMainKotlinMetadata")
+  }
+}
+
+tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
+  println("-------------- Configuring org.gradle.jvm.tasks.Jar: ${name} --------------")
   if (name.endsWith("SourcesJar")) {
     dependsOn("kspCommonMainKotlinMetadata")
   }
