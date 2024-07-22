@@ -175,6 +175,10 @@ tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
   }
 }
 
+tasks.forEach {
+  println("---------- [PRINTING] Task: ${it.name} - ${it::class.java} ----------")
+}
+
 // find every task ending with SourcesJar and make it depend on kspCommonMainKotlinMetadata
 //tasks.matching { name.endsWith("SourcesJar") }.configureEach {
 //  dependsOn("kspCommonMainKotlinMetadata")
