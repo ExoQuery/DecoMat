@@ -160,9 +160,11 @@ if (project.hasProperty("platform") && project.property("platform") == "linux") 
   }
 }
 
-// find every task ending with SourcesJar and make it depend on kspCommonMainKotlinMetadata
-tasks.matching { name.endsWith("SourcesJar") }.configureEach {
-  dependsOn("kspCommonMainKotlinMetadata")
+afterEvaluate {
+  // find every task ending with SourcesJar and make it depend on kspCommonMainKotlinMetadata
+  tasks.matching { name.endsWith("SourcesJar") }.configureEach {
+    dependsOn("kspCommonMainKotlinMetadata")
+  }
 }
 
 // Add the kspCommonMainKotlinMetadata dependency to sourcesJar tasks if needed
