@@ -161,6 +161,7 @@ if (project.hasProperty("platform") && project.property("platform") == "linux") 
 }
 
 // Add the kspCommonMainKotlinMetadata dependency to sourcesJar tasks if needed
+// (i.e. in some cases the task e.g. tasks("jsSourcesJar") will not exist)
 tasks.findByName("jsSourcesJar")?.dependsOn("kspCommonMainKotlinMetadata")
 tasks.findByName("jvmSourcesJar")?.dependsOn("kspCommonMainKotlinMetadata")
 tasks.findByName("linuxX64SourcesJar")?.dependsOn("kspCommonMainKotlinMetadata")
