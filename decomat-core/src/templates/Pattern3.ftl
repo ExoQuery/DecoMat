@@ -171,10 +171,10 @@ class Then${i1}${i2}<[@PatternVars 1 i1 /], [@PatternVars 2 i2 /], R>(
     return f([@ofContextComponents i1, i2 /], [@compVars2 i1, i2 /])
   }
   inline fun thenIf(crossinline f: [@contextOfContextComponents i1, i2 /]([@Components 1 i1 /], [@Components 2 i2 /]) -> Boolean) =
-    Then${i1}${i2}(pat) { v -> useComponents(v, { cc, c1, c2 -> f([@fArgs i1 i2 /]) }) }
+    Then${i1}${i2}(pat) { v -> check(v) && useComponents(v, { cc, c1, c2 -> f([@fArgs i1 i2 /]) }) }
 
   inline fun thenIfThis(crossinline f: R.([@Components 1 i1 /], [@Components 2 i2 /]) -> Boolean) =
-    Then${i1}${i2}(pat) { v -> useComponents(v, { _, c1, c2 -> f(v, c1, c2) }) }
+    Then${i1}${i2}(pat) { v -> check(v) && useComponents(v, { _, c1, c2 -> f(v, c1, c2) }) }
 
   inline fun <O> then(crossinline f: [@contextOfContextComponents i1, i2 /]([@Components 1 i1 /], [@Components 2 i2 /]) -> O) =
     StageCase(pat, check) { v -> useComponents(v, { cc, c1, c2 -> f([@fArgs i1 i2 /]) }) }
@@ -206,10 +206,10 @@ class Then${i1}M${i2}<[@PatternVars 1 i1 /], M, [@PatternVars 2 i2 /], R>(
     return f([@ofContextComponents i1, i2 /], [@compVars2M i1, i2 /])
   }
   inline fun thenIf(crossinline f: [@contextOfContextComponents i1, i2 /]([@Components 1 i1 /], M, [@Components 2 i2 /]) -> Boolean) =
-    Then${i1}M${i2}(pat) { v -> useComponents(v, { cc, c1, m, c2 -> f([@fArgsM i1 i2 /]) }) }
+    Then${i1}M${i2}(pat) { v -> check(v) && useComponents(v, { cc, c1, m, c2 -> f([@fArgsM i1 i2 /]) }) }
 
   inline fun thenIfThis(crossinline f: R.([@Components 1 i1 /], M, [@Components 2 i2 /]) -> Boolean) =
-    Then${i1}M${i2}(pat) { v -> useComponents(v, { _, c1, m, c2 -> f(v, c1, m, c2) }) }
+    Then${i1}M${i2}(pat) { v -> check(v) && useComponents(v, { _, c1, m, c2 -> f(v, c1, m, c2) }) }
 
   inline fun <O> then(crossinline f: [@contextOfContextComponents i1, i2 /]([@Components 1 i1 /], M, [@Components 2 i2 /]) -> O) =
     StageCase(pat, check) { v -> useComponents(v, { cc, c1, m, c2 -> f([@fArgsM i1 i2 /]) }) }

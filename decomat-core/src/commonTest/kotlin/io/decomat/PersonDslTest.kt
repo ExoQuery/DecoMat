@@ -24,10 +24,48 @@ class PersonDslTest: DecomatTest {
     assertEquals(result, Res2("Joe", "Bloggs"))
   }
 
+  // Testing early-exist case
+  @Test
+  fun person_name_joe_bloggs_not_roggs_early() {
+    val result =
+      on(Person(Name("Joe", "Bloggs"), 123)).match(
+        case(Person[Name[Is("Joe"), Is("Roggs")]])
+          .then { name -> wrongAnswer },
+        case(Person[Name[Is(), Is("Roggs")]])
+          .then { name -> wrongAnswer },
+        caseEarly(false)(Person[Name[Is("Joe"), Is("Bloggs")]])
+          .then { name -> wrongAnswer },
+        case(Person[Name[Is("Joe"), Is("Bloggs")]])
+          .then { (first, last) -> Res2(first, last) }
+      )
+
+    assertEquals(result, Res2("Joe", "Bloggs"))
+  }
+
+  @Test
+  fun name_joe_bloggs_not_roggs_early() {
+    val result =
+      on(Name("Joe", "Bloggs")).match(
+        case(Name[Is("Joe"), Is("Roggs")])
+          .then { _, _ -> wrongAnswer },
+        case(Name[Is(), Is("Roggs")])
+          .then { _, _ -> wrongAnswer },
+        caseEarly(false).invoke(Name[Is("Joe"), Is("Bloggs")])
+          .then { _, _ -> wrongAnswer },
+        case(Name[Is("Joe"), Is("Bloggs")])
+          .then { first, last -> Res2(first, last) }
+      )
+
+    assertEquals(result, Res2("Joe", "Bloggs"))
+  }
+
   // Person(Name(== "Joe", == "Bloggs" not "Roggs"))
   @Test
   fun person_name_joe_bloggs_not_roggs1() {
     Person(Name("Joe", "Bloggs"), 123).match(
+      //fastCase("foo" == "foo")(Name[Is(), Is()]).then {
+      //
+      //}
       case(Person[Name[Is { it == "Joe" }, Is { it == "Roggs" }]])
         .then { name -> wrongAnswer },
       case(Person[Name[Is(), Is { it == "Roggs" }]])

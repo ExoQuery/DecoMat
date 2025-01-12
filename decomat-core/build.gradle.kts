@@ -113,7 +113,9 @@ kotlin {
         }
 
         commonTest {
-            kotlin.srcDir("$buildDir/templates/")
+            // Including this twice actually seems to introduce build breakages in ThenTest
+            // which thinks that `case(Pattern2...)` doesn't exist and tries to use .case from Comparator<T>
+            //kotlin.srcDir("$buildDir/templates/")
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-common"))
@@ -147,7 +149,7 @@ val runFreemarkerTemplate by tasks.registering {
         val created = File(projectDir, "build/templates/io/decomat").mkdirs()
         //println("----- Creating dirs: build/templates/io/decomat: ${created} ------")
 
-        //println("----- Creating Template -----")
+        println("----- Creating Template -----")
         val template = Template("", File(projectDir, "src/templates/Pattern3.ftl").readText(), cfg)
         val root =
             HashMap<String, Any>()
@@ -156,14 +158,14 @@ val runFreemarkerTemplate by tasks.registering {
                     //put("model", model.encode())
                 }
 
-        //println("----- Creating Sink: build/templates/Pattern3.ftl.gen -----")
+        println("----- Creating Sink: build/templates/Pattern3.ftl.gen -----")
         val file = File(projectDir, "build/templates/Pattern3.ftl.gen")
         file.createNewFile()
         val os = file.outputStream()
 
         val out: Writer = OutputStreamWriter(os)
 
-        //println("----- Executing Template -----")
+        println("----- Executing Template -----")
         template.process(root, out)
         out.flush()
         os.close()

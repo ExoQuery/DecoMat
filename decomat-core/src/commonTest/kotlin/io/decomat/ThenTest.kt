@@ -13,6 +13,12 @@ public class ThenTest: DecomatTest {
     )
 
   @Test
+  fun thenIs_Is_Early() =
+    assertEquals(
+      caseEarly(false)(Is<Entity>()).then { a -> Res1(a) }.evalSafe(foo), null
+    )
+
+  @Test
   fun typesTest() {
     case(FlatMap_M(Is(), Is())).then { a: Query, b: Query -> Res2(a, b) }
   }

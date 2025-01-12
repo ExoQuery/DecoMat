@@ -61,7 +61,7 @@ class StageCase<O, out R> private constructor (
   private val evalCase: (R) -> O
 ): Case<O, R> {
   override fun matches(value: @UnsafeVariance R): Boolean =
-    pat.matchesAny(value as Any) && check(value)
+    check(value) && pat.matchesAny(value as Any)
   override fun eval(value: @UnsafeVariance R): O = evalCase(value)
 
   /**
