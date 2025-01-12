@@ -56,7 +56,7 @@ abstract class Pattern1<out P1: Pattern<R1>, out R1, out R>(val pattern1: P1, ov
       is ProductClass1<*, *> ->
         if (!typeR.typecheck(instance.productClassValueUntyped)) fail("The type ${instance.productClassValueUntyped} has an unexpected return type")
         else divideIntoComponents(instance as ProductClass<R>)
-      else -> failToDivide(instance)
+      else -> fail("Cannot divide $instance into components. It is not a Product1 class.")
     }
 
   open fun divideIntoComponents(instance: ProductClass<@UnsafeVariance R>): Components1<@UnsafeVariance R1> =
