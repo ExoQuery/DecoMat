@@ -60,8 +60,11 @@ class StageCase<O, out R> private constructor (
   private val check: (R) -> Boolean,
   private val evalCase: (R) -> O
 ): Case<O, R> {
+  // NOTE: The typing here is WRONG! `@UnsafeVariance R` has to be treated as `Any` which is indeed possible in this case.
+  // that is why we need to do matchesAny FIRST because that actually does a typecheck and only then can we do check(value)
   override fun matches(value: @UnsafeVariance R): Boolean =
-    check(value) && pat.matchesAny(value as Any)
+    pat.matchesAny(value as Any) && check(value)
+
   override fun eval(value: @UnsafeVariance R): O = evalCase(value)
 
   /**

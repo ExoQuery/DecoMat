@@ -32,17 +32,17 @@ data class Entity<T>(@Component val v: T): Query<T>, HasProductClass<Entity<T>> 
 
 object NestedM {
   operator fun <AP: Pattern<A>, A: Query<*>> get(v: AP): Pattern1<AP, A, Nested<*>> =
-    customPattern1(v) { it: Nested<*> -> Components1(it.body) }
+    customPattern1("NestedM", v) { it: Nested<*> -> Components1(it.body) }
 }
 
 object FlatMapM {
   operator fun <AP: Pattern<A>, BP: Pattern<B>, A: Query<*>, B: Query<*>> get(head: AP, body: BP): Pattern2<AP, BP, A, B, FlatMap<*, *>> =
-    customPattern2(head, body) { it: FlatMap<*, *> -> Components2(it.head, it.body) }
+    customPattern2("FlatMapM", head, body) { it: FlatMap<*, *> -> Components2(it.head, it.body) }
 }
 
 object EntityM {
   operator fun <AP: Pattern<A>, A> get(v: AP): Pattern1<AP, A, Entity<*>> =
-    customPattern1(v) { it: Entity<*> -> Components1(it.v) }
+    customPattern1("EntityM", v) { it: Entity<*> -> Components1(it.v) }
 }
 
 fun regularMatch() {
