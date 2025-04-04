@@ -33,7 +33,18 @@ jobs:
             platform: linux
           - os: macOS-latest
             # publishTvosX64PublicationToOss publishTvosArm64PublicationToOss publishWatchosX64PublicationToOss publishWatchosArm32PublicationToOss publishWatchosArm64PublicationToOss
-            publish_command: build publishMacosX64PublicationToOss publishMacosArm64PublicationToOss publishIosX64PublicationToOss publishIosArm64PublicationToOss publishIosSimulatorArm64PublicationToOss
+            publish_command: >- 
+              build 
+              publishMacosX64PublicationToOss
+              publishMacosArm64PublicationToOss
+              publishIosX64PublicationToOss
+              publishIosArm64PublicationToOssRepository
+              publishIosSimulatorArm64PublicationToOss
+              publishTvosX64PublicationToOss
+              publishTvosArm64PublicationToOss
+              publishWatchosX64PublicationToOss
+              publishWatchosArm32PublicationToOss
+              publishWatchosArm64PublicationToOss
             platform: mac
           - os: windows-latest
             publish_command: build publishMingwX64PublicationToOss
