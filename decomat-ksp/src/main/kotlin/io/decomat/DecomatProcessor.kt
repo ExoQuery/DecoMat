@@ -252,7 +252,7 @@ class DecomatProcessor(
 
         val additionalImports =
           classFullNameListElem +
-            members.mapNotNull { it.qualifiedClassName } +
+            members.mapNotNull { it.importName } +
             // When elements themselves have things that need to be imported e.g. `data class Something(val content: List<OtherStuff>)` make sure to import `OtherStuff`
             members.flatMap {
               recurseGetArgs(it.field.type).map { it.declaration.qualifiedName?.asString() }.filterNotNull()
@@ -273,7 +273,12 @@ class DecomatProcessor(
 
     }
   }
-  data class Member(val className: String, val qualifiedClassName: String?, val field: PropertyHolder, val isGeneric: Boolean) {
+
+  /**
+   * The field class-name is based on simple-name which has any generic parameters in it.
+   * The import-name is based on the qualified name which does not have generics (which is perfect for imports)
+   */
+  data class Member(val className: String, val importName: String?, val field: PropertyHolder, val isGeneric: Boolean) {
     val fieldName = field.name
   }
 
@@ -373,12 +378,6 @@ class DecomatProcessor(
           is ModelType.None -> ""
         }
 
-      fun tryQualified(m: DecomatProcessor.Member): String =
-        m.qualifiedClassName ?: run {
-          logger.warn("Fully qualified name of `${m.field.type.toString()}` was null using regular name: ${m.className}")
-          m.className
-        }
-
       val patLetters =
         when (modelType) {
           // e.g. the A in Pattern1<A, AP, FlatMap>
@@ -387,7 +386,7 @@ class DecomatProcessor(
           is ModelType.AB -> listOf("A", "B")
           // e.g. the A and String and B in Pattern2M<A, String, B, AP, BP, FlatMap>
           // I.e. the actual M-parameter is a concrete type per the data-class that XYZ_M class is being defined for
-          is ModelType.AMB -> listOf("A", tryQualified(modelType.m), "B")
+          is ModelType.AMB -> listOf("A", modelType.m.className, "B")
           is ModelType.None -> listOf()
         }
 

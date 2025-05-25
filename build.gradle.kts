@@ -11,7 +11,7 @@ plugins {
 
 allprojects {
   group = "io.exoquery"
-  version = "0.5.0"
+  version = "0.6.0"
 
   //val varintName = project.name
 
@@ -150,4 +150,42 @@ allprojects {
       !this.project.name.contains("decomat-examples")
     }
   }
+}
+
+
+tasks.register("publishLinuxLocal") {
+  dependsOn(
+    ":${Release.Project.`decomat-core`}:publishToMavenLocal",
+    ":${Release.Project.`decomat-ksp`}:publishToMavenLocal"
+  )
+}
+
+
+object Release {
+
+  object Project {
+    val `decomat-core` = "decomat-core"
+    val `decomat-ksp` = "decomat-ksp"
+  }
+
+  val macBuildCommands =
+    listOf(
+      "iosX64",
+      "iosArm64",
+      "tvosX64",
+      "tvosArm64",
+      "watchosX64",
+      "watchosArm32",
+      "watchosArm64",
+      "macosX64",
+      "macosArm64",
+      "iosSimulatorArm64"
+    ).map { "publish${it.capitalize()}PublicationToOssRepository" }
+
+  val windowsBuildCommands =
+    listOf(
+      "mingwX64"
+    ).map { "publish${it.capitalize()}PublicationToOssRepository" }
+
+  fun String.capitalize() = this.replaceFirstChar { it.uppercase() }
 }
