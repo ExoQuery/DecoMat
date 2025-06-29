@@ -8,15 +8,17 @@ import com.google.devtools.ksp.symbol.*
 class DecomatProcessor(
   private val logger: KSPLogger,
   val codeGenerator: CodeGenerator,
-  val matchableAnnotationName: String,
-  val componentAnnotationName: String,
-  val middleComponentAnnotationName: String,
-  val constructorComponentAnnotationName: String,
   val renderAdtFunctions: Boolean,
   val renderFromHereFunction: Boolean,
   val fromHereFunctionName: String,
   val fromFunctionName: String
 ) : SymbolProcessor {
+
+  // The only way these things should be changed is a rename during import e.g. `import io.example.Matchable as Mat` and KSP 2.0 shortNames are not affected by these renames.
+  val matchableAnnotationName: String = "Matchable"
+  val componentAnnotationName: String = "Component"
+  val middleComponentAnnotationName: String = "MiddleComponent"
+  val constructorComponentAnnotationName: String = "ConstructorComponent"
 
   private val Fail = object {
     fun CannotAnnotateParameter(symbol: KSNode, annotName: String) = logger.error("Cannot annotate the parameter ${symbol}. Only val-parameters are allowed to be annotated via @${annotName}.", symbol)
