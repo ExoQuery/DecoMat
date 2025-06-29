@@ -47,3 +47,4 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
       - run: ./gradlew ${{ matrix.publish_command }} -Pplatform=${{ matrix.platform }} -PisCI -no-daemon --stacktrace
+      - run: ./gradlew publishSonatypeStaging
