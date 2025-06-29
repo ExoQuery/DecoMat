@@ -15,6 +15,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.impldep.org.apache.commons.io.output.ByteArrayOutputStream
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import java.io.Writer
@@ -37,8 +38,9 @@ kotlin {
   val isMac = platform == "mac"
   val isWindows = platform == "windows"
 
+  jvmToolchain(11)
+
   jvm {
-    jvmToolchain(11)
   }
 
   if(!isCI) {
@@ -172,6 +174,9 @@ val runFreemarkerTemplate by tasks.registering {
     }
 }
 
+tasks.withType<KotlinCompilationTask<*>> {
+  dependsOn(runFreemarkerTemplate)
+}
 
 tasks.withType<KotlinCompile> {
     dependsOn(runFreemarkerTemplate)
@@ -184,7 +189,7 @@ tasks.withType<KotlinNativeCompile> {
 // THIS is the actual task used by the KMP multiplatform plugin. Without this,
 // the freemarker dependency won't run in time for the dependencies to pick it up.
 // That means that a command like `./gradlew clean build` for the base-project will fail.
-tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     dependsOn(runFreemarkerTemplate)
 }
 

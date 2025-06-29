@@ -9,8 +9,9 @@ plugins {
 }
 
 kotlin {
+  jvmToolchain(11)
+
   jvm {
-    jvmToolchain(11)
   }
 
   sourceSets {
@@ -20,7 +21,7 @@ kotlin {
 
       dependencies {
         project(":decomat-core")
-        implementation("com.google.devtools.ksp:symbol-processing-api:1.8.20-1.0.11")
+        implementation("com.google.devtools.ksp:symbol-processing-api:2.2.0-2.0.2")
 
         //implementation("com.facebook:ktfmt:0.43")
         implementation(kotlin("reflect"))

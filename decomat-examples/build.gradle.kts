@@ -1,6 +1,5 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.jetbrains.kotlin.com.intellij.psi.impl.source.SourceJavaCodeReference
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 
 plugins {
@@ -20,10 +19,10 @@ kotlin {
   val isMac = platform == "mac"
   val isWindows = platform == "windows"
 
-  // If we're not the CI build a limited set of standard targets
+  jvmToolchain(11)
+
   // If we're not the CI build a limited set of standard targets
   jvm {
-    jvmToolchain(11)
   }
 
   if(!isCI) {
@@ -136,7 +135,24 @@ tasks.register("listTasks") {
   }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach {
+/*
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+A problem was found with the configuration of task ':decomat-examples:compileKotlinJs' (type 'Kotlin2JsCompile').
+  - Gradle detected a problem with the following location: '/home/alexi/git/DecoMat/decomat-examples/build/generated/ksp/metadata/commonMain/kotlin'.
+
+    Reason: Task ':decomat-examples:compileKotlinJs' uses this output of task ':decomat-examples:kspCommonMainKotlinMetadata' without declaring an explicit or implicit dependency. This can lead to incorrect results being produced, depending on what order the tasks are executed.
+
+    Possible solutions:
+      1. Declare task ':decomat-examples:kspCommonMainKotlinMetadata' as an input of ':decomat-examples:compileKotlinJs'.
+      2. Declare an explicit dependency on ':decomat-examples:kspCommonMainKotlinMetadata' from ':decomat-examples:compileKotlinJs' using Task#dependsOn.
+      3. Declare an explicit dependency on ':decomat-examples:kspCommonMainKotlinMetadata' from ':decomat-examples:compileKotlinJs' using Task#mustRunAfter.
+
+    Please refer to https://docs.gradle.org/8.1.1/userguide/validation_problems.html#implicit_dependency for more details about this problem.
+
+ */
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
   if (name != "kspCommonMainKotlinMetadata") {
     dependsOn("kspCommonMainKotlinMetadata")
   }

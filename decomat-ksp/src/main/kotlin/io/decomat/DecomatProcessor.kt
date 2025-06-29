@@ -86,7 +86,8 @@ class DecomatProcessor(
           when {
             sym is KSClassDeclaration && sym.classKind == ClassKind.CLASS -> {
               val useStarProjection =
-                sym.annotations.find { it.shortName.getShortName() == matchableAnnotationName }?.arguments?.get(0)?.value as? Boolean ?: false
+                // Starting KSP 2.2.0-2.0.2 doing a arguments.get[0] without doing a size check could throw a IndexOutOfBoundsException
+                sym.annotations.find { it.shortName.getShortName() == matchableAnnotationName }?.arguments?.let { if (it.size > 0) it[0].value as Boolean else false } ?: false
 
               val componentElements = findComponents(sym)
               // Only actually allowed to have one of these but keep a list anyhow
@@ -163,7 +164,7 @@ class DecomatProcessor(
     object None: ModelType
   }
 
-  data class GenModel private constructor(val imports: List<String>, val allMembers: List<Member>, val ksClass: KSClassDeclaration, val useStarProjection: Boolean, val productComponents: KSPropertyDeclaration?) {
+  data class GenModel(val imports: List<String>, val allMembers: List<Member>, val ksClass: KSClassDeclaration, val useStarProjection: Boolean, val productComponents: KSPropertyDeclaration?) {
     val members = allMembers.filter { it.field.isRegularComponent() }
     val middleMembers = allMembers.filter { it.field.isMiddleComponent() }
 
@@ -372,9 +373,15 @@ class DecomatProcessor(
       // Generate: A: Pattern<AP>, B: Pattern<BP>
       val pats =
         when (modelType) {
-          is ModelType.A -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>"
-          is ModelType.AB -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>, B: Pattern<${ members[1].primitiveOrNull() ?: "BP" }>"
-          is ModelType.AMB -> "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>, B: Pattern<${ members[1].primitiveOrNull() ?: "BP" }>" // No M is defined here because it is a concrete type in patLetters below
+          is ModelType.A ->
+            if (members.size == 0) throw IllegalArgumentException("ModelType.A must have at least one member but got ${members.size}")
+            else "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>"
+          is ModelType.AB ->
+            if (members.size != 2) throw IllegalArgumentException("ModelType.AB must have exactly two members but got ${members.size}")
+            else "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>, B: Pattern<${ members[1].primitiveOrNull() ?: "BP" }>"
+          is ModelType.AMB ->
+            if (members.size != 2 || model.middleMembers.size != 1) throw IllegalArgumentException("ModelType.AMB must have exactly two members and one middle member but got ${members.size} members and ${model.middleMembers.size} middle members")
+            else "A: Pattern<${ members[0].primitiveOrNull() ?: "AP" }>, B: Pattern<${ members[1].primitiveOrNull() ?: "BP" }>" // No M is defined here because it is a concrete type in patLetters below
           is ModelType.None -> ""
         }
 
@@ -442,9 +449,9 @@ class DecomatProcessor(
         val fileContent =
           """
             package $packageName
-            
+
             ${model.imports.map { "import $it" }.joinToString("\n            ")}
-            
+
             data class ${className}_M<${generics}>($classValsTypes): $subClass($classVals, Typed<$classUseSiteName>())
             operator fun <${generics}> ${companionName}.Companion.get($functionsParamsTypes) = ${className}_M($classVals)
             val ${companionName}.Companion.Is get() = Is<$classStarProjectedName>()
@@ -454,18 +461,18 @@ class DecomatProcessor(
           """
             class Copy${className}${genericBlock}(${allMembers.map { "val ${it.fieldName}: ${it.field.type.toString()}" }.commaSep()}) {
               operator fun invoke(original: ${model.parametrizedName}) =
-                original.copy(${allMembers.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})  
+                original.copy(${allMembers.map { "${it.fieldName} = ${it.fieldName}" }.commaSep()})
             }
-            
+
             // Helper function for ADTs that allows you to easily copy the element mentioning only the properties you care about
             // Typically in an ADT you have a lot of properties and only one or two define the actual structure of the object
             // this means that you want to explicitly state only the structural ADT properties and implicitly copy the rest.
             fun ${genericBlock} ${companionName}.Companion.${fromFunctionName}(${memberKeyValues}) = Copy${className}(${allMembers.map { it.fieldName }.commaSep()})
-            
+
             ${fromHereFunction}
-              
+
             data class Id${className}${genericBlock}(${allMembers.map { "val ${it.fieldName}: ${it.className}" }.commaSep()})
-              
+
             // A helper function that creates a ADT-identifier from the structural properties of the ADT.
             // Typically in an ADT you have a lot of properties and only one or two define the actual structure of the object
             // and those are the only ones on which you want the `equals` and `hashCode` to be based.

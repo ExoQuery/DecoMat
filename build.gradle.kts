@@ -4,14 +4,14 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
   `maven-publish`
   signing
-  kotlin("multiplatform") version "1.9.22" apply false
+  kotlin("multiplatform") version "2.2.0" apply false
   id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
   id("org.jetbrains.dokka") version "1.9.20"
 }
 
 allprojects {
   group = "io.exoquery"
-  version = "0.6.0"
+  version = "1.0.0"
 
   //val varintName = project.name
 
@@ -42,8 +42,7 @@ allprojects {
       maven {
         name = "Oss"
         setUrl {
-          val repositoryId = System.getenv("SONATYPE_REPOSITORY_ID") ?: error("Missing env variable: SONATYPE_REPOSITORY_ID")
-          "https://s01.oss.sonatype.org/service/local/staging/deployByRepositoryId/$repositoryId/"
+          "https://ossrh-staging-api.central.sonatype.com/service/local/staging/maven2/"
         }
         credentials {
           username = user
@@ -52,7 +51,7 @@ allprojects {
       }
       maven {
         name = "Snapshot"
-        setUrl { "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+        setUrl { "https://central.sonatype.com/repository/maven-snapshots/" }
         credentials {
           username = user
           password = pass

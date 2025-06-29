@@ -2,8 +2,8 @@ include(":decomat-core", ":decomat-ksp", ":decomat-examples")
 
 pluginManagement {
   plugins {
-    id("com.google.devtools.ksp") version "1.9.22-1.0.17"
-    kotlin("jvm") version "1.9.22"
+    id("com.google.devtools.ksp") version "2.2.0-2.0.2"
+    kotlin("jvm") version "2.2.0"
     id("dev.anies.gradle.template") version "0.0.2"
   }
   repositories {
