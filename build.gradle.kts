@@ -42,7 +42,7 @@ allprojects {
       maven {
         name = "Oss"
         setUrl {
-          "https://ossrh-staging-api.central.sonatype.com/service/local/staging/maven2/"
+          "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
         }
         credentials {
           username = user
